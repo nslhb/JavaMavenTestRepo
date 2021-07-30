@@ -1,8 +1,11 @@
-name: labeltest
+name: test
 
 on:
   pull_request:
-    types: [ labeled ]
+    branches:
+      - main
+    types: [labeled]
+
 jobs:
   label-test:
     runs-on: ubuntu-latest
