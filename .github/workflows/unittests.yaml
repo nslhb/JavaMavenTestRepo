@@ -22,7 +22,7 @@ jobs:
       with:
           maven-version: 3.8.1
     - name: test
-      if: ${{ github.event.label.name == 'dev-qa' }}
+      if: ${{ github.event.label.name == 'devops' }}
       run: | 
         Things can trigger
     - name: Run Test 
