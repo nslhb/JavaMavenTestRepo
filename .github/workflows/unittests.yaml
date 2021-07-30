@@ -7,11 +7,11 @@ on:
     - 'main'
 
 jobs:
-  manifests:
+  unit-test:
     runs-on: ubuntu-latest
     steps:
     - name: Step 1 - MainBranch Checkout
-      uses: actions/checkout@v2s
+      uses: actions/checkout@v2
     - name: Step 2 - JDK SETUP
       uses: actions/setup-java@v2
       with:
