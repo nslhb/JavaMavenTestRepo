@@ -1,8 +1,16 @@
 aliases:
   devops-reviewers:
-    - taruneswar-valeti
     - NaveenVastare
     - ankitrajakbrane
   devops-approvers:
     - AsishVenakataSai
-
+  dev-reviewers:
+    - taruneswar-valeti
+    - NaveenVastare
+  dev-approvers:
+    - taruneswar-valeti
+  dev-qa-reviewers:
+    - taruneswar-valeti
+    - ankitrajakbrane
+  dev-qa-approvers:
+    - AsishVenakataSai    

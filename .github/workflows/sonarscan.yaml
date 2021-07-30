@@ -1,0 +1,26 @@
+name: sonar-scan
+on: 
+  push:
+    branches:
+      - main
+
+jobs:
+  sonarcloud:
+    runs-on: ubuntu-latest
+    steps:
+    - uses: actions/checkout@v2
+    - name: JDK SETUP
+      uses: actions/setup-java@v2
+      with:
+        java-version: '15'
+        distribution: 'adopt'        
+    - name: Set up Maven
+      uses: stCarolas/setup-maven@v4
+      with:
+          maven-version: 3.8.1
+    - name: SonarCloud Scan
+      env:
+        GITHUB_TOKEN: ${{ secrets.NSLHB_TEST_TOKEN }} 
+        SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
+      run: |
+         mvn -B  -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io/organizations/nslhb -Dsonar.organization=nslhb -Dsonar.projectKey=JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java  -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html

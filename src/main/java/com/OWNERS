@@ -1,0 +1,6 @@
+approvers:
+- dev-approvers
+reviewers:
+- dev-reviewers
+labels:
+- dev

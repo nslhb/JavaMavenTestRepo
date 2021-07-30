@@ -2,3 +2,5 @@ approvers:
 - devops-approvers
 reviewers:
 - devops-reviewers
+labels:
+- prow-test

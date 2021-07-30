@@ -1,0 +1,16 @@
+name: test
+
+on:
+  pull_request:
+    branches:
+      - main
+    types: [labeled]
+
+jobs:
+  label-test:
+    runs-on: ubuntu-latest
+    steps:
+    - name: test
+      if: ${{ github.event.label.name == 'devops' }}
+      run: | 
+        echo Things can trigger
