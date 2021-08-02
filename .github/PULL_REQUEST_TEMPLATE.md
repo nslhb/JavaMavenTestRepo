@@ -1,2 +1,2 @@
 This is a PR template.<br/>
-Please add Jira ticket in Branch name and PR title.
+Please add Jira ticket in branch name and PR title.
