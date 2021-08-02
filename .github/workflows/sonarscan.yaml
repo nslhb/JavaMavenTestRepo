@@ -9,6 +9,8 @@ jobs:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
+      with:
+       fetch-depth: 0
     - name: JDK SETUP
       uses: actions/setup-java@v2
       with:
@@ -18,9 +20,39 @@ jobs:
       uses: stCarolas/setup-maven@v4
       with:
           maven-version: 3.8.1
-    - name: SonarCloud Scan
-      env:
-        GITHUB_TOKEN: ${{ secrets.NSLHB_TEST_TOKEN }} 
-        SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
-      run: |
-         mvn -B  -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io/organizations/nslhb -Dsonar.organization=nslhb -Dsonar.projectKey=JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java  -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html
+ #   - name: SonarCloud Scan
+ #     env:
+ #       GITHUB_TOKEN: ${{ secrets.NSLHB_TEST_TOKEN }} 
+ #       SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
+ #     run: |
+ #        mvn clean install -B sonar:sonar -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=nslhb -Dsonar.projectKey=nslhb_JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java -Dsonar.java.binaries=target/classes -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html
+
+    - name: Setting Maven settings.xml
+      uses: whelk-io/maven-settings-xml-action@v16
+      with:
+        repositories: '[{ "id": "github", "url":  "${{ secrets.MAVEN_PACKAGE_REPO }}", "snapshots.enabled": "true" }]'
+        servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.NSLHB_TEST_TOKEN }}" }]'
+
+    - name: Install aws-cli
+      uses: unfor19/install-aws-cli-action@v1
+    - name: Configure AWS credentials
+      uses: aws-actions/configure-aws-credentials@v1
+      with:
+        aws-access-key-id: ASIA27Z34IUCGUKXWEEK
+        aws-secret-access-key: f6etXB/P6FVnYJNJwICNduhj1y6zVepMdFh4xWI0
+        aws-session-token: IQoJb3JpZ2luX2VjEOH//////////wEaCXVzLWVhc3QtMSJHMEUCIBIauzuFnjyLS0EujvRFq67nc5N30AN2IDICCU0xz3doAiEAlpcoYrWfrb1w8CLYdBMifJxEuUqIPduOmi7deo1Bx34qqwMI6v//////////ARAAGgw3NTU1MDI5NTc4MjgiDDH+FgevLXokx5VR4ir/AqFsfD0WDb8Bd9falnypHgXaq33ywzVoo9D9he48LHZBNnIB40LnMAhOqzunYtk6ax8Qt0ZT93BzYYMgxSs6avYvtxKOtRxT2tw7/MZ+mhffkF2vewirMmNJeuuGh9XGnbKmhCT4Eb6iOFJkQ6pw+vpqkyNPCGyOiJk2CXrIMOgAxvmWXbzIcOCe2rWiQ2rcBbm9yU2I6lCAyAyCxBA8NuTzJ9bxd3P2UMgbt1XrNYa1I1S0X+/K+BBA9FuOhpHSvnF978Amfe/yx+YRtp9PqbnSLh4lp4YkanKst+KXAj6eSDbNrGJw23z22fNTAgj4yGxYlWscKnifBhxpGo3kWy4FuJxk1NBWF/zXYO/MRdlm3k2/iprE7/VDEr54O+PKJs+QvGj5QhouEgarwNdNy1xVQGpiAtKTL14zuKQhVoNhlOXmjGdo8pm2BfKE5TPDfyOr8EnWaQZ4LMv68B+K6AWTO7RNtUvilQ4jn2sXLOyGj1zmLaKW+bhfOWG93bbMMKbWnogGOqYBZ1J02vT8h/VvdiF6gfD+JgXsCL4xI0fFkzboVDXKTQ82ZBHpxiSc/rhGdbBLm4HI5K/QxK1YBOAZ+BjszjyRTzgaWQP3cGMbsmOxD1ENlBBjkF0IgiHhOl5vMIEoI04Kva/v6+8OGVKzOJHps/9RyEtZluc7i85BbF74mZs2n3MtOcmUD5jx8KGB+DW7e9dWdIhr7Kb3hg2CtOPPD91dIsp1LvrNFA==
+        aws-region: ap-south-1
+        
+    - name: Login to Amazon ECR
+      id: login-ecr
+      uses: aws-actions/amazon-ecr-login@v1
+        
+    - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
+      id: jib_image
+      run: | 
+        export DOCKER_CLI_EXPERIMENTAL=enabled
+        sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>755502957828.dkr.ecr.ap-south-1.amazonaws.com/hello-world</image><tags><tag>${{ github.sha }}</tag><tag>dev-${{ github.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
+        docker manifest inspect 755502957828.dkr.ecr.ap-south-1.amazonaws.com/hello-world:dev-${{ github.sha }}      
+#        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 755502957828.dkr.ecr.ap-south-1.amazonaws.com
+
+    
