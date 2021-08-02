@@ -31,7 +31,7 @@ jobs:
       uses: whelk-io/maven-settings-xml-action@v16
       with:
         repositories: '[{ "id": "github", "url":  "${{ secrets.MAVEN_PACKAGE_REPO }}", "snapshots.enabled": "true" }]'
-        servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.secrets.NSLHB_TEST_TOKEN }}" }]'
+        servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.NSLHB_TEST_TOKEN }}" }]'
 
     - name: Install aws-cli
       uses: unfor19/install-aws-cli-action@v1
