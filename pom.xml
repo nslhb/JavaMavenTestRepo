@@ -57,8 +57,7 @@
           <to>
             <image>755502957828.dkr.ecr.ap-south-1.amazonaws.com/hello-world</image>
             <tags>
-              <tag>${{ github.sha }}</tag>
-              <tag>dev-${{ github.sha }}</tag>
+              <tag>dev</tag>
             </tags>
           </to>
           <from>
