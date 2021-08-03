@@ -50,6 +50,31 @@
     </pluginManagement>
     <plugins>
       <plugin>
+        <groupId>com.google.cloud.tools</groupId>
+        <artifactId>jib-maven-plugin</artifactId>
+        <version>3.0.0</version>
+        <configuration>
+          <to>
+            <image>755502957828.dkr.ecr.ap-south-1.amazonaws.com/hello-world</image>
+            <tags>
+              <tag>${{ github.sha }}</tag>
+              <tag>dev-${{ github.sha }}</tag>
+            </tags>
+          </to>
+          <from>
+            <image>openjdk:alpine</image>
+            <platforms>
+              <platform>
+                <architecture>amd64</architecture>
+                <os>linux</os></platform>
+              <platform>
+                <architecture>arm64</architecture>
+                <os>linux</os></platform>
+            </platforms>
+          </from>
+        </configuration>
+      </plugin> 
+      <plugin>
         <!-- Build an executable JAR -->
         <groupId>org.apache.maven.plugins</groupId>
         <artifactId>maven-jar-plugin</artifactId>
