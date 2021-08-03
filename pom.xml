@@ -55,7 +55,7 @@
         <version>3.0.0</version>
         <configuration>
           <to>
-            <image>public.ecr.aws/nslhub/javamaventestrepo</image>
+            <image>755502957828.dkr.ecr.ap-south-1.amazonaws.com/hello-world</image>
             <tags>
               <tag>dev</tag>
             </tags>
