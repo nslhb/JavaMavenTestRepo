@@ -24,6 +24,14 @@
      <url>https://repo.maven.apache.org/maven2/</url> 
     </pluginRepository> 
   </pluginRepositories>
+  <dependencies>
+    	<dependency>
+    		<groupId>com.nsl.common.services</groupId>
+    		<artifactId>nsl-common-services</artifactId>
+    		<version>0.0.1-SNAPSHOT</version>
+    	</dependency>
+  </dependencies>
+
   <build>
     <pluginManagement>
       <plugins>
