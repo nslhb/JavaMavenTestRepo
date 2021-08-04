@@ -1,0 +1,27 @@
+name: jira-description-action
+on:
+  pull_request:
+    types: [opened, edited]
+    branches: 
+    - jira-test
+jobs:
+  add-jira-description:
+    runs-on: ubuntu-latest
+    steps:
+      - uses: cakeinpanic/jira-description-action@v1.2
+        name: jira-description-action
+        id: jira-description-action
+        with:
+          github-token: ${{ secrets.GITHUB_TOKEN }}
+          jira-token: ${{ secrets.JIRA_TOKEN }}
+          jira-base-url: https://fractalenterprises.atlassian.net
+          use: both
+          fail-when-jira-issue-not-found: true
+      - uses: peter-evans/close-pull@v1.1.3
+        name: close-pull
+        id: close-pull
+        if: ${{ failure() }}
+        with:
+          pull-request-number: ${{ github.event.number }}
+          comment: Closing pull request because it doesn't reference any Jira issues
+          delete-branch: false
