@@ -8,7 +8,7 @@ jobs:
     runs-on: ubuntu-latest
     steps:
       - name: jira-description
-        uses: cakeinpanic/jira-description-action@v1.1
+        uses: cakeinpanic/jira-description-action@v0.3.0
         id: jira-description-action
         with:
           github-token: ${{ secrets.NSLHB_TEST_TOKEN }}
