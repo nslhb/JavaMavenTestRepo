@@ -1,7 +1,7 @@
 name: jira-description-action
 on:
   pull_request:
-    types: [opened, edited]
+    types: [opened, reopnened, edited]
     branches: 
     - jira-test
 jobs:
