@@ -12,7 +12,7 @@ jobs:
         name: jira-description-action
         id: jira-description-action
         with:
-          github-token: ${{ secrets.GITHUB_TOKEN }}
+          github-token: ${{ secrets.NSLHB_TEST_TOKEN }}
           jira-token: ${{ secrets.JIRA_TOKEN }}
           jira-base-url: https://fractalenterprises.atlassian.net
           use: both
@@ -20,7 +20,7 @@ jobs:
       - uses: peter-evans/close-pull@v1.1.3
         name: close-pull
         id: close-pull
-        if: ${{ failure() }}
+        if: ${{ failure() && always() }}
         with:
           pull-request-number: ${{ github.event.number }}
           comment: Closing pull request because it doesn't reference any Jira issues
