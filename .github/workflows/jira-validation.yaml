@@ -22,5 +22,8 @@ jobs:
         if: ${{ failure() && always() }}
         with:
           pull-request-number: ${{ github.event.number }}
-          comment: Closing pull request because it doesn't reference any Jira issues
+          comment: |
+            Closing pull request because it doesn't reference any Jira issues.
+            Try branch name or PR title with the below format:
+            Ex: SRE-XX bug fix
           delete-branch: false
