@@ -2,6 +2,8 @@ name: pr-event-check
 
 on:
   pull_request:
+    types:
+      - edited
     branches:
       - main
   push:
