@@ -5,6 +5,7 @@ on:
     types:
       - edited
       - synchronize
+      - unlabeled
     branches:
       - main
   push:
