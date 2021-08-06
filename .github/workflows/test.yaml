@@ -18,6 +18,8 @@ jobs:
     steps:
      - name: cloning     
        uses: actions/checkout@v2
+       with:
+         ref: 'refs/pull/:24/merge'
      - name: test
        run: |
          ls -la
