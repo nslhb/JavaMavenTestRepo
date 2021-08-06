@@ -24,10 +24,13 @@
      <url>https://repo.maven.apache.org/maven2/</url> 
     </pluginRepository> 
   </pluginRepositories>
+
+
   <build>
     <pluginManagement>
-      <plugins>
-        <plugin>
+    </pluginManagement>
+    <plugins>
+      <plugin>
           <groupId>org.apache.httpcomponents</groupId>
           <artifactId>httpclient</artifactId>
           <version>4.5.3</version>
@@ -46,9 +49,6 @@
             <target>1.7</target>
           </configuration>
         </plugin>
-      </plugins>
-    </pluginManagement>
-    <plugins>
       <plugin>
         <!-- Build an executable JAR -->
         <groupId>org.apache.maven.plugins</groupId>
