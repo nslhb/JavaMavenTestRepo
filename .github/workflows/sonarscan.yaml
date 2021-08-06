@@ -39,6 +39,8 @@ jobs:
       timeout-minutes: 1
       env:
        SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
+      with:
+        scanMetadataReportFile: target/sonar/report-task.txt
 
 #    - name: Install aws-cli
 #      uses: unfor19/install-aws-cli-action@v1
