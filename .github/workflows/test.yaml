@@ -5,11 +5,9 @@ on:
     types:
       - edited
       - synchronize
+      - unlabeled
     branches:
       - main
-  push:
-    branches:
-      - main   
 
 jobs:
   label-test:
