@@ -1,2 +1,2 @@
 # JavaMavenTestRepo
-This Repo is used for test and demo purpose
+This Repo is used for test and demo purpose 
