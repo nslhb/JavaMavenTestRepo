@@ -1,8 +1,9 @@
 name: autoupdate
-on:
-  # This will trigger on all pushes to all branches.
-  push: 
-    - main
+on: 
+  push:
+    branches:
+      - main
+      
 jobs:
   autoupdate:
     name: autoupdate
