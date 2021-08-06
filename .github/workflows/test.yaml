@@ -1,16 +1,20 @@
-name: test
+name: pr-event-check
 
 on:
   pull_request:
     branches:
       - main
-    types: [labeled]
 
 jobs:
   label-test:
     runs-on: ubuntu-latest
     steps:
-    - name: test
-      if: ${{ github.event.label.name == 'devops' }}
-      run: | 
-        echo Things can trigger
+     - name: cloning     
+       uses: actions/checkout@v2
+     - name: test
+       run: |
+         ls -la
+#    - name: test
+#      if: ${{ github.event.label.name == 'devops' }}
+#      run: | 
+#        echo Things can trigger
