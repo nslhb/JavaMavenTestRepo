@@ -1,11 +1,15 @@
-name: post-pr-workflow
+name: post-pr-merge-workflow
 on: 
   push:
     branches:
       - main
-
+    paths-ignore:
+      - 'README.md'
+      - '.github/**'
+      - 'OWNERS'
+      - 'OWNERS_ALIASES'
 jobs:
-  sonarcloud:
+  post-pr:
     runs-on: ubuntu-latest
     steps:
     - uses: actions/checkout@v2
