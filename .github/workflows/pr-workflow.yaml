@@ -5,15 +5,8 @@ on:
     types:
       - opened
       - reopened
-      - edited
-      - synchronize
-      - unlabeled
     branches:
       - main
-    paths-ignore:
-      - '**.md'
-      - 'OWNERS'
-      - 'OWNERS_ALIASES' 
 
 jobs:
   unit-tests:
