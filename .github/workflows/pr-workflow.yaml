@@ -9,12 +9,16 @@ on:
       - unlabeled      
     branches:
       - main
+    paths-ignore:
+      - '**.md'
+      - 'OWNERS'
+      - 'OWNERS_ALIASES'
 
 jobs:
   unit-tests:
     runs-on: ubuntu-latest
     outputs:
-      unit_tests_results: ${{ steps.unit-test.outputs.test_result }}
+      unit_tests_result: ${{ steps.unit-test.outputs.test_result }}
     steps:
     - name: Step 1 - MainBranch Checkout
       uses: actions/checkout@v2
