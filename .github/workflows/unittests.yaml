@@ -2,9 +2,12 @@ name: unit-test
 
 on:
   pull_request:
-  push:
     branches:
     - 'main'
+    paths-ignore:
+    - 'README.md'
+    - 'OWNERS'
+    - 'OWNERS_ALIASES'  
 
 jobs:
   unit-test:
@@ -21,10 +24,6 @@ jobs:
       uses: stCarolas/setup-maven@v4
       with:
           maven-version: 3.8.1
-    - name: test
-      if: ${{ github.event.label.name == 'devops' }}
-      run: | 
-        Things can trigger
     - name: Run Test 
       id: tests
       run: |
