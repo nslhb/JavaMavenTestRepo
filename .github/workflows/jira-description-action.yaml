@@ -1,0 +1,32 @@
+
+name: jira-description-action
+on:
+  pull_request:
+    types: [opened, edited, reopened]
+    branches: 
+    - jira-test
+jobs:
+  add-jira-description:
+    runs-on: ubuntu-latest
+    steps:
+      - name: jira-description
+        uses: cakeinpanic/jira-description-action@v0.3.0
+        id: jira-description-action
+        with:
+          github-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          jira-token: ${{ secrets.JIRA_TOKEN }}
+          jira-base-url: https://fractalenterprises.atlassian.net
+          use: both
+          custom-issue-number-regexp: '^[A-Z]+-\d+' 
+          fail-when-jira-issue-not-found: true
+      - uses: peter-evans/close-pull@v1.1.3
+        name: close-pull
+        id: close-pull
+        if: ${{ failure() && always() }}
+        with:
+          pull-request-number: ${{ github.event.number }}
+          comment: |
+            Closing pull request because it doesn't reference any Jira issues.
+            Try branch name or PR title with the below format:
+            Ex: SRE-XX bug fix
+          delete-branch: false
