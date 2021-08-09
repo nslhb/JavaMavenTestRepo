@@ -112,7 +112,7 @@ jobs:
           allow-repeats: true  
         
       - name: adding sonar-restiction label
-        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' && !contains( github.event.pull_request.labels.*.name, 'sonar-gate-restiction' ) }}
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: |
@@ -130,7 +130,7 @@ jobs:
           allow-repeats: true  
         
       - name: removing sonar-restiction label
-        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'true' && contains( github.event.pull_request.labels.*.name, 'sonar-gate-restiction' }}
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'true' && contains( github.event.pull_request.labels.*.name, 'sonar-gate-restiction' ) }}
         uses: actions-ecosystem/action-remove-labels@v1
         with:
           labels: |
