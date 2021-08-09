@@ -1,0 +1,143 @@
+name: pr-workflow
+
+on:
+  pull_request:
+    types:
+      - edited
+      - synchronize
+      - unlabeled
+    branches:
+      - main
+    paths-ignore:
+    - '**.md'
+    - 'OWNERS'
+    - 'OWNERS_ALIASES' 
+
+jobs:
+  sonar-scan:
+    runs-on: ubuntu-latest
+    outputs:
+      sonar_scan_result: ${{ steps.sonar.outputs.sonar_result }}
+    if: ${{ !contains( github.event.pull_request.labels.*.name, 'do-not-merge/work-in-progress') }}
+    steps:
+     - name: cloning     
+       uses: actions/checkout@v2
+     - name: Step 1 - MainBranch Checkout
+       uses: actions/checkout@v2
+     - name: Step 2 - JDK SETUP
+       uses: actions/setup-java@v2
+       with:
+         java-version: '15'
+         distribution: 'adopt'
+     - name: Set up Maven
+       uses: stCarolas/setup-maven@v4
+       with:
+         maven-version: 3.8.1
+     - name: Setting Maven settings.xml
+       uses: whelk-io/maven-settings-xml-action@v16
+       with:
+         repositories: '[{ "id": "github", "url":  "${{ secrets.MAVEN_PACKAGE_REPO }}", "snapshots.enabled": "true" }]'
+         servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.NSLHB_TEST_TOKEN }}" }]'
+     - name: SonarCloud Scan
+       id: sonar
+       env:
+         GITHUB_TOKEN: ${{ secrets.NSLHB_TEST_TOKEN }} 
+         SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
+       run: |
+          echo "::set-output name=sonar_result::false"    
+          mvn clean install -B sonar:sonar -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=nslhb -Dsonar.projectKey=nslhb_JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java -Dsonar.java.binaries=target/classes -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html  -Dsonar.qualitygate.wait=true
+          echo "::set-output name=sonar_result::true"
+          
+  custom-image:
+    runs-on: ubuntu-latest
+    if: ${{ !contains( github.event.pull_request.labels.*.name, 'custom-build-image-resticted') && !contains( github.event.pull_request.labels.*.name, 'do-not-merge/work-in-progress') }}
+    steps:
+     - name: cloning     
+       uses: actions/checkout@v2
+     - name: Step 1 - MainBranch Checkout
+       uses: actions/checkout@v2
+     - name: Step 2 - JDK SETUP
+       uses: actions/setup-java@v2
+       with:
+         java-version: '15'
+         distribution: 'adopt'
+     - name: Set up Maven
+       uses: stCarolas/setup-maven@v4
+       with:
+         maven-version: 3.8.1
+     - name: Install aws-cli
+       uses: unfor19/install-aws-cli-action@v1
+     - name: Configure AWS credentials
+       uses: aws-actions/configure-aws-credentials@v1
+       with:
+         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+         aws-region: ap-south-1
+        
+     - name: Login to Amazon ECR
+       id: login-ecr
+       uses: aws-actions/amazon-ecr-login@v1
+         
+     - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
+       id: jib_image
+       run: | 
+          ls -la 
+          cat ~/.m2/settings.xml
+          export DOCKER_CLI_EXPERIMENTAL=enabled
+          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>test-${{ github.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
+          docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:test-${{ github.sha }}   
+     - name: adding image built comments
+       uses: mshick/add-pr-comment@v1
+       with:
+          message: |
+            Custom-Image 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:test-${{ github.sha }} is built.
+          repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]' 
+          allow-repeats: true
+          
+  pr-labeler:
+    runs-on: ubuntu-latest
+    if: always()
+    needs: sonar-scan
+    steps:
+      - name: adding fail comments
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
+        uses: mshick/add-pr-comment@v1
+        with:
+          message: |
+            Sonar Gate Failed 
+          repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]' 
+          allow-repeats: true  
+        
+      - name: adding sonar-restiction label
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: |
+            sonar-gate-restiction
+          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+
+      - name: adding pass comments
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'true' }}
+        uses: mshick/add-pr-comment@v1
+        with:
+          message: |
+            Sonar Gate Passed 
+          repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          repo-token-user-login: 'github-actions[bot]' 
+          allow-repeats: true  
+        
+      - name: removing sonar-restiction label
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'true' && contains( github.event.pull_request.labels.*.name, 'sonar-gate-restiction' }}
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: |
+            sonar-gate-restiction
+          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+      
+#    - name: test
+#      if: ${{ github.event.label.name == 'devops' }}
+#      run: | 
+#        echo Things can trigger
