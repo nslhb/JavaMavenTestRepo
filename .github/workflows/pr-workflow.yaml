@@ -163,7 +163,7 @@ jobs:
   unit-tests-pr-labeler:
     runs-on: ubuntu-latest
     if: always()
-    needs: sonar-scan
+    needs: unit-tests
     steps:         
     - name: removing failed label
       if: ${{ needs.unit-tests.outputs.unit_tests_result == 'true' && contains( github.event.pull_request.labels.*.name, 'unit-tests-restiction') }}
