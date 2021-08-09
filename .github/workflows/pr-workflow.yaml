@@ -11,9 +11,9 @@ on:
     branches:
       - main
     paths-ignore:
-    - '**.md'
-    - 'OWNERS'
-    - 'OWNERS_ALIASES' 
+      - '**.md'
+      - 'OWNERS'
+      - 'OWNERS_ALIASES' 
 
 jobs:
   unit-tests:
