@@ -3,13 +3,10 @@ on:
   push:
     branches:
       - main
-    paths-ignore:
-      - 'README.md'
-      - 'OWNERS'
-      - 'OWNERS_ALIASES'
+
 jobs:
   post-pr:
-    runs-on: ubuntu-latest
+    runs-on: ubuntu-latest 
     steps:
     - uses: actions/checkout@v2
       with:
@@ -68,5 +65,8 @@ jobs:
          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>dev-${{ github.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
          docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:dev-${{ github.sha }}      
 #        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 755502957828.dkr.ecr.ap-south-1.amazonaws.com
-
-    
+    - name: autoupdate
+      uses: docker://chinthakagodawita/autoupdate-action:v1
+      env:
+       GITHUB_TOKEN: '${{ secrets.NSLHB_TEST_TOKEN  }}'
+       MERGE_MSG: "Branch was auto-updated with main branch"     
