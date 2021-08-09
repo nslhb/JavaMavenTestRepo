@@ -1,5 +1,5 @@
 name: pr-workflow
-
+concurrency: pr-${{ github.ref }}
 on:
   pull_request:
     types:
