@@ -32,52 +32,46 @@ jobs:
         echo "::set-output name=test_result::true"  
     - name: adding paased label
       uses: actions-ecosystem/action-add-labels@v1
-      if: ${{ github.event_name == 'pull_request' }} 
       with:
         labels: |
-          githubactions-approved       
+          unit-tests-approved       
         github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'         
     - name: removing failed label
-      if: ${{ github.event_name == 'pull_request' && contains( github.event.pull_request.labels.*.name, 'do-not-merge/githubaction-restiction') }}
+      if: ${{ contains( github.event.pull_request.labels.*.name, 'do-not-merge/unit-tests-restiction') }}
       uses: actions-ecosystem/action-remove-labels@v1
       with:
         labels: |
-          do-not-merge/githubaction-restiction
+          do-not-merge/unit-tests-restiction
         github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
     - name: adding passed comments
-      if: ${{ github.event_name == 'pull_request' }}
       uses: mshick/add-pr-comment@v1
       with:
         message: |
-          Github-Action Tests Passed 
+          Unit Tests Passed 
         repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
         repo-token-user-login: 'github-actions[bot]' 
         allow-repeats: true    
     - name: adding failed comments
-      if: ${{ github.event_name == 'pull_request' && steps.tests.outputs.test_result  == 'failure' && always() }}
+      if: ${{ steps.tests.outputs.test_result  == 'failure' && always() }}
       uses: mshick/add-pr-comment@v1
       with:
         message: |
-          Github-Action Tests Failed 
+          Unit Tests Failed 
         repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
         repo-token-user-login: 'github-actions[bot]' 
         allow-repeats: true
     - name: adding failed label
-      if: ${{ github.event_name == 'pull_request' && steps.tests.outputs.test_result  == 'failure' && always()  }}
-      uses: mshick/add-pr-comment@v1
+      if: ${{ steps.tests.outputs.test_result  == 'failure' && always() }}
+      uses: actions-ecosystem/action-remove-labels@v1
       with:
-        message: |
-          Github-Action Tests Failed 
-        repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
-        repo-token-user-login: 'github-actions[bot]' 
-        allow-repeats: true       
+        labels: |
+          do-not-merge/unit-tests-restiction
+        github_token: '${{ secrets.NSLHB_TEST_TOKEN }}' 
     - name: removing passed label
-      if: ${{ github.event_name == 'pull_request' && steps.tests.outputs.test_result  == 'failure' && always()  && contains( github.event.pull_request.labels.*.name, 'githubaction-restiction')}}
-      uses: mshick/add-pr-comment@v1
+      if: ${{ steps.tests.outputs.test_result  == 'failure' && always()  && contains( github.event.pull_request.labels.*.name, 'unit-tests-restiction')}}
+      uses: actions-ecosystem/action-remove-labels@v1
       with:
-        message: |
-          Github-Action Tests Failed 
-        repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
-        repo-token-user-login: 'github-actions[bot]' 
-        allow-repeats: true   
+        labels: |
+          unit-tests-approved
+        github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
         
