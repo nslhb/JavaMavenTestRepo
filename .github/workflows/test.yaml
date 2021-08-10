@@ -1,0 +1,24 @@
+name: pr-event-check
+
+on:
+  pull_request:
+    types:
+      - edited
+      - synchronize
+      - unlabeled
+    branches:
+      - main
+
+jobs:
+  label-test:
+    runs-on: ubuntu-latest
+    steps:
+     - name: cloning     
+       uses: actions/checkout@v2
+     - name: test
+       run: |
+         ls -la
+#    - name: test
+#      if: ${{ github.event.label.name == 'devops' }}
+#      run: | 
+#        echo Things can trigger

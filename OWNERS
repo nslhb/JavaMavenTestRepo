@@ -3,5 +3,4 @@ approvers:
 reviewers:
 - devops-reviewers
 labels:
-- custom-build-image-resticted
 - prow-test
