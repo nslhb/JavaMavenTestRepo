@@ -25,6 +25,13 @@ jobs:
         echo ${NEW_PR_BODY}
         echo ${PULL_REQUEST_NUMBER}
 
+    - name: update-pull-request
+      uses: kt3k/update-pr-description@v1.0.1
+      with:
+        pr_body: |
+                test1
+        destination_branch: prod
+        github_token: ${{ secrets.GITHUB_TOKEN }}
 
     - name: Test outputs
       env:
