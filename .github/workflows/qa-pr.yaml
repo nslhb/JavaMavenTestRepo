@@ -17,7 +17,7 @@ jobs:
             PULL_REQUEST_FROM_BRANCH: "main"
             PULL_REQUEST_TITLE: "Auto PR"
             PASS_IF_EXISTS: true
-
+            PULL_REQUEST_UPDATE: true
     - name: PR Body 
       run: |
         NEW_PR_BODY=`curl https://api.github.com/repos/nslhb/javamaventestrepo/pulls/${{ github.event.pull_request.number }} | grep body | cut -d'"' -f4`
