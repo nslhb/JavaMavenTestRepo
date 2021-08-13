@@ -30,6 +30,7 @@ jobs:
       with:
         pr_body: |
                 test1
+        source_branch: main        
         destination_branch: prod
         github_token: ${{ secrets.GITHUB_TOKEN }}
 
