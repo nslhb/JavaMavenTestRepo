@@ -10,6 +10,7 @@ jobs:
     runs-on: ubuntu-latest
     steps: 
     - name: pull-request-action
+      id: pull_request
       uses: vsoch/pull-request-action@master
       env:
             GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
@@ -23,6 +24,18 @@ jobs:
         NEW_PR_BODY=`curl https://api.github.com/repos/nslhb/javamaventestrepo/pulls/${{ github.event.pull_request.number }} | grep body | cut -d'"' -f4`
         echo ${NEW_PR_BODY}
         echo ${PULL_REQUEST_NUMBER}
+
+
+    - name: Test outputs
+      env:
+          pull_request_number_output: ${{ steps.pull_request.outputs.pull_request_number }}
+          pull_request_url_output: ${{ steps.pull_request.outputs.pull_request_url }}
+      run: |
+          echo "Pull request number from output: ${pull_request_number_output}"
+          echo "Pull request url from output: ${pull_request_url_output}"
+          echo "Pull request number from environment: ${PULL_REQUEST_NUMBER}"
+          echo "Pull request url from environment: ${PULL_REQUEST_URL}"
+          echo "Another way to specify from output ${{ steps.pull_request.outputs.pull_request_number }}"
 #       CURRENT_PR_BODY=`curl https://api.github.com/repos/nslhub/project/pulls/${{ steps.pull-request-action.outputs.pull_request_number }} | grep body | cut -d'"' -f4`        
 #        echo "${CURRENT_PR_BODY}\n\n${NEW_PR_BODY}"
 #         ${{ steps.pull_request.outputs.pull_request_url }}             
