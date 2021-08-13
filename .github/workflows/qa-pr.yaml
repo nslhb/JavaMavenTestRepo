@@ -9,30 +9,25 @@ jobs:
   qa-pr-creattion-or-updation:
     runs-on: ubuntu-latest
     steps: 
-    - name: new pull-request
-      uses: repo-sync/pull-request@v2
-      with:
-        source_branch: "main"                                  # If blank, default: triggered branch
-        destination_branch: "prod"                             # If blank, default: master
-        pr_title: "Syncing Master And Prod"                    # Title of pull request
-        pr_body: |
-           "*An automated PR*"                                 # Full markdown support, requires pr_title to be set
-           "${{ github.event.pull_request.number }}"
-           "${{ github.event.pull_request.body }}"     
-        pr_label: "auto-pr"                                    # Comma-separated list (no spaces)
-        pr_allow_empty: false                                  # Creates pull request even if there are no changes
-        github_token: ${{ secrets.GITHUB_TOKEN }}
-    - name: updating PR Body
-      if: ${{ failure() && always() }}
-      uses: tzkhan/pr-update-action@v2
-      with:
-        repo-token: '${{ secrets.NSLHB_TEST_TOKEN }}'
-        base-branch-regex: 'main'
-        head-branch-regex: 'prod'
-        body-template: |
-          "&"
-          "${{ github.event.pull_request.number }}"  
-          "${{ github.event.pull_request.body }}"
-        body-update-action: 'suffix'
+    - name: pull-request-action
+      uses: vsoch/pull-request-action@master
+      env:
+            GITHUB_TOKEN: ${{ secrets.GITHUB_TOKEN }}
+            PULL_REQUEST_BRANCH: "prod"
+            PULL_REQUEST_TITLE: "Auto PR"
+            PASS_IF_EXISTS: true
+#         ${{ steps.pull_request.outputs.pull_request_url }}             
+#    - name: updating PR Body
+#      if: ${{ success() }}
+#      uses: tzkhan/pr-update-action@v2
+#      with:
+#        repo-token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+#        base-branch-regex: 'main'
+#        head-branch-regex: 'prod'
+#        body-template: |
+#          "&"
+#          "${{ github.event.pull_request.number }}"  
+#          "${{ github.event.pull_request.body }}"
+#        body-update-action: 'suffix'
 
    
