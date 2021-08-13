@@ -1,8 +1,10 @@
 name: qa-pr
 on:
- pull_request: [closed]
- branches:
-  - main
+ pull_request: 
+   types:
+     - closed
+   branches:
+     - main
 jobs:
   qa-pr-creattion-or-updation:
     runs-on: ubuntu-latest
