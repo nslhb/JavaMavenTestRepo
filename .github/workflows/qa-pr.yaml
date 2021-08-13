@@ -1,0 +1,36 @@
+name: qa-pr.yaml
+on:
+ pull_request: [closed]
+ branches:
+  - main
+jobs:
+  qa-pr-creattion-or-updation:
+    runs-on: ubuntu-latest
+    steps: 
+    - name: new pull-request
+      uses: repo-sync/pull-request@v2
+      with:
+        source_branch: "main"                                  # If blank, default: triggered branch
+        destination_branch: "prod"                             # If blank, default: master
+        pr_title: "Syncing Master And Prod"                    # Title of pull request
+        pr_body: |
+           "*An automated PR*"                                 # Full markdown support, requires pr_title to be set
+           "${{ github.event.pull_request.number }}"
+           "${{ github.event.pull_request.body }}"     
+        pr_label: "auto-pr"                                    # Comma-separated list (no spaces)
+        pr_allow_empty: false                                  # Creates pull request even if there are no changes
+        github_token: ${{ secrets.GITHUB_TOKEN }}
+    - name: updating PR Body
+      if: ${{ failure() && always() }}
+      uses: tzkhan/pr-update-action@v2
+      with:
+        repo-token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+        base-branch-regex: 'main'
+        head-branch-regex: 'prod'
+        body-template: |
+                            &
+           "${{ github.event.pull_request.number }}"
+           "${{ github.event.pull_request.body }}"  
+        body-update-action: 'suffix'
+
+   
