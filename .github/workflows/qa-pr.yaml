@@ -1,4 +1,4 @@
-name: qa-pr.yaml
+name: qa-pr
 on:
  pull_request: [closed]
  branches:
@@ -28,9 +28,9 @@ jobs:
         base-branch-regex: 'main'
         head-branch-regex: 'prod'
         body-template: |
-                            &
-           "${{ github.event.pull_request.number }}"
-           "${{ github.event.pull_request.body }}"  
+          "&"
+          "${{ github.event.pull_request.number }}"  
+          "${{ github.event.pull_request.body }}"
         body-update-action: 'suffix'
 
    
