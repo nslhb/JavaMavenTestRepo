@@ -21,7 +21,7 @@ jobs:
     - name: PR Body 
       run: |
         CURRENT_PR_BODY=`curl https://api.github.com/repos/user_org/project/pulls/${{ steps.pull-request-action.outputs.pull_request_number }} | grep bpdy | cut -d'"' -f4`
-        NEW_PR_BODY=`curl https://api.github.com/repos/user_org/project/pulls/${{ github.event.pull_request.number }} | grep body | cut -d'"' -f4`
+        NEW_PR_BODY=`curl https://api.github.com/repos/user_org/project/pulls/${{ github.event.pull_request.number }} | grep title`
         echo "${CURRENT_PR_BODY}\n\n${NEW_PR_BODY}"
 #         ${{ steps.pull_request.outputs.pull_request_url }}             
 #    - name: updating PR Body
