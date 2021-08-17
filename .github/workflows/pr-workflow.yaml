@@ -150,7 +150,7 @@ jobs:
           ls -la 
           cat ~/.m2/settings.xml
           export DOCKER_CLI_EXPERIMENTAL=enabled
-          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>public.ecr.aws/nslhub/javamaventestrepo</image><tags><tag>java-maven-test-01<tag><tag>${{ github.event.pull_request.head.ref }}</tag><tag>pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
+          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>public.ecr.aws/nslhub/javamaventestrepo</image><tags><tag>java-maven-test-01</tag><tag>${{ github.event.pull_request.head.ref }}</tag><tag>pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
           docker manifest inspect public.ecr.aws/nslhub/javamaventestrepo:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
      - name: adding image built comments
        uses: mshick/add-pr-comment@v1
