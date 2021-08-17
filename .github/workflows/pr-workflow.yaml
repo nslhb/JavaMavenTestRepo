@@ -139,13 +139,14 @@ jobs:
        run: |
          echo ${{ secrets.PUBLIC_ECR_CREDS }} >> ~/.docker/config
         
-     - name: Login to Amazon ECR
-       id: login-ecr
-       uses: aws-actions/amazon-ecr-login@v1
+#     - name: Login to Amazon ECR
+#       id: login-ecr
+#       uses: aws-actions/amazon-ecr-login@v1
          
      - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
        id: jib_image
        run: | 
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin public.ecr.aws/nslhub/javamaventestrepo
           ls -la 
           cat ~/.m2/settings.xml
           export DOCKER_CLI_EXPERIMENTAL=enabled
