@@ -148,9 +148,9 @@ jobs:
 #         rm -rf ~/.docker/config.json
 #         echo ${{ secrets.PUBLIC_ECR_CREDS }} >> ~/.docker/config.json
         
-#     - name: Login to Amazon ECR
-#       id: login-ecr
-#       uses: aws-actions/amazon-ecr-login@v1
+     - name: Login to Amazon ECR
+       id: login-ecr
+       uses: aws-actions/amazon-ecr-login@v1
          
      - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
        id: jib_image
