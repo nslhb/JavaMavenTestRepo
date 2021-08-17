@@ -135,10 +135,18 @@ jobs:
          maven-version: 3.8.1
      - name: Install aws-cli
        uses: unfor19/install-aws-cli-action@v1
-     - name: Edit docker/config creds
-       run: |
-         rm -rf ~/.docker/config.json
-         echo ${{ secrets.PUBLIC_ECR_CREDS }} >> ~/.docker/config.json
+       
+     - name: Configure AWS credentials
+       uses: aws-actions/configure-aws-credentials@v1
+       with:
+         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+         aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+         aws-region: ap-south-1   
+#     - name: Edit docker/config creds
+#       run: |
+#         rm -rf ~/.docker/config.json
+#         echo ${{ secrets.PUBLIC_ECR_CREDS }} >> ~/.docker/config.json
         
 #     - name: Login to Amazon ECR
 #       id: login-ecr
@@ -147,6 +155,7 @@ jobs:
      - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
        id: jib_image
        run: |
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin public.ecr.aws/nslhub/javamaventestrepo
           ls -la 
           cat ~/.m2/settings.xml
           export DOCKER_CLI_EXPERIMENTAL=enabled
