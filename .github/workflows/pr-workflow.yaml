@@ -136,13 +136,9 @@ jobs:
          maven-version: 3.8.1
      - name: Install aws-cli
        uses: unfor19/install-aws-cli-action@v1
-     - name: Configure AWS credentials
-       uses: aws-actions/configure-aws-credentials@v1
-       with:
-         aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-         aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
-         aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-         aws-region: ap-south-1
+     - name: Edit docker/config creds
+       run: |
+         echo ${{ secrets.PUBLIC_ECR_CREDS }} >> ~/.docker/config
         
      - name: Login to Amazon ECR
        id: login-ecr
@@ -154,13 +150,13 @@ jobs:
           ls -la 
           cat ~/.m2/settings.xml
           export DOCKER_CLI_EXPERIMENTAL=enabled
-          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/dev</image><tags><tag>${{ github.event.pull_request.head.ref }}</tag><tag>${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
-          docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/dev:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
+          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>public.ecr.aws/nslhub/javamaventestrepo</image><tags><tag>java-maven-test-01<tag><tag>${{ github.event.pull_request.head.ref }}</tag><tag>pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
+          docker manifest inspect public.ecr.aws/nslhub/javamaventestrepo:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
      - name: adding image built comments
        uses: mshick/add-pr-comment@v1
        with:
           message: |
-            Custom-Image 832807087073.dkr.ecr.ap-south-1.amazonaws.com/dev:${{github.event.number}}-${{ github.event.pull_request.head.sha }} is built.
+            Custom-Image public.ecr.aws/nslhub/javamaventestrepo:pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }} is built.
           repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true
