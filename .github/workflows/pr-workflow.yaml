@@ -1,5 +1,4 @@
 name: pr-workflow
-concurrency: pr-${{ github.ref }}
 on:
   pull_request:
     types:
@@ -15,8 +14,51 @@ on:
       - 'OWNERS_ALIASES'
 
 jobs:
-  unit-tests:
+  pr-metadata-labels:
+    runs-on: ubuntu-latest
     if: ${{ github.event.action != 'unlabeled' }}
+    steps: 
+      - name: adding metadata labels
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: |
+            STAGE-2
+            STAGE-3
+            STAGE-4
+          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+      - name: adding metadata labels
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: |
+            do-not-merge/work-in-progress
+            sonar-restriction
+            component-test-restriction
+            STAGE-1
+          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
+          
+  stage-1-labeler:
+    runs-on: ubuntu-latest  
+    if: ${{ github.event.action == 'unlabeled'  && contains( github.event.pull_request.labels.*.name, 'STAGE-1') && always() }}
+    steps:
+      - name: removing STAGE-1 label
+        if: ${{ !contains( join(github.event.pull_request.labels.*.name, ','), 'do-not-merge') }}
+        uses: actions-ecosystem/action-remove-labels@v1
+        with:
+          labels: |
+           STAGE-1
+          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
+      - name: adding STAGE-2 label
+        if: ${{ !contains( join(github.event.pull_request.labels.*.name, ','), 'do-not-merge') }}
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+          labels: |
+           STAGE-2
+          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'       
+          
+          
+  unit-tests:
+    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-1') && always() }}
+    needs: [pr-metadata-labels]
     runs-on: ubuntu-latest
     outputs:
       unit_tests_result: ${{ steps.unit-test.outputs.test_result }}
@@ -38,12 +80,12 @@ jobs:
         echo "::set-output name=test_result::false"  
         mvn test
         echo "::set-output name=test_result::true"  
-    
+       
   sonar-scan:
+    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && contains( github.event.pull_request.labels.*.name, 'sonar-restriction') && always() }}
     runs-on: ubuntu-latest
     outputs:
       sonar_scan_result: ${{ steps.sonar.outputs.sonar_result }}
-    if: ${{ !contains( github.event.pull_request.labels.*.name, 'do-not-merge/work-in-progress') }}
     steps:
      - name: cloning     
        uses: actions/checkout@v2
@@ -73,9 +115,10 @@ jobs:
           mvn clean install -B sonar:sonar -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=nslhb -Dsonar.projectKey=nslhb_JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java -Dsonar.java.binaries=target/classes -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html  -Dsonar.qualitygate.wait=true -Dmaven.test.skip=true 
           echo "::set-output name=sonar_result::true"
           
-  custom-image:
+  build-image:
     runs-on: ubuntu-latest
-    if: ${{ !contains( github.event.pull_request.labels.*.name, 'custom-build-image-resticted') && !contains( github.event.pull_request.labels.*.name, 'do-not-merge/work-in-progress') }}
+    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && !contains( github.event.pull_request.labels.*.name, 'sonar-restriction') && always() }}
+    needs: sonar-scan
     steps:
      - name: cloning     
        uses: actions/checkout@v2
@@ -92,13 +135,18 @@ jobs:
          maven-version: 3.8.1
      - name: Install aws-cli
        uses: unfor19/install-aws-cli-action@v1
+       
      - name: Configure AWS credentials
        uses: aws-actions/configure-aws-credentials@v1
        with:
          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-         aws-region: ap-south-1
+         aws-region: ap-south-1   
+#     - name: Edit docker/config creds
+#       run: |
+#         rm -rf ~/.docker/config.json
+#         echo ${{ secrets.PUBLIC_ECR_CREDS }} >> ~/.docker/config.json
         
      - name: Login to Amazon ECR
        id: login-ecr
@@ -106,20 +154,33 @@ jobs:
          
      - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
        id: jib_image
-       run: | 
+       run: |
+          aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin public.ecr.aws/nslhub/javamaventestrepo
           ls -la 
           cat ~/.m2/settings.xml
           export DOCKER_CLI_EXPERIMENTAL=enabled
-          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>test</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
-          docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:test   
+          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>public.ecr.aws/nslhub/javamaventestrepo</image><tags><tag>java-maven-test-01</tag><tag>${{ github.event.pull_request.head.ref }}</tag><tag>pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
+          docker manifest inspect public.ecr.aws/nslhub/javamaventestrepo:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
      - name: adding image built comments
        uses: mshick/add-pr-comment@v1
        with:
           message: |
-            Custom-Image 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:test is built.
+            Custom-Image public.ecr.aws/nslhub/javamaventestrepo:pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }} is built.
           repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true
+     - name: removing STAGE-2 label
+       uses: actions-ecosystem/action-remove-labels@v1
+       with:
+          labels: |
+           STAGE-2
+          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+     - name: adding STAGE-3 label
+       uses: actions-ecosystem/action-add-labels@v1
+       with:
+          labels: |
+           STAGE-3
+          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
           
   sonar-pr-labeler:
     runs-on: ubuntu-latest
@@ -135,15 +196,6 @@ jobs:
           repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true  
-        
-      - name: adding sonar-restiction label
-        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' && !contains( github.event.pull_request.labels.*.name, 'sonar-gate-restiction' ) }}
-        uses: actions-ecosystem/action-add-labels@v1
-        with:
-          labels: |
-            sonar-gate-restiction
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
-
       - name: adding pass comments
         if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'true' }}
         uses: mshick/add-pr-comment@v1
@@ -152,8 +204,7 @@ jobs:
             Sonar Gate Passed 
           repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
-          allow-repeats: true  
-        
+          allow-repeats: true     
       - name: removing sonar-restiction label
         if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'true' && contains( github.event.pull_request.labels.*.name, 'sonar-gate-restiction' ) }}
         uses: actions-ecosystem/action-remove-labels@v1
@@ -192,13 +243,7 @@ jobs:
         repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
         repo-token-user-login: 'github-actions[bot]' 
         allow-repeats: true
-    - name: adding failed label
-      if: ${{ needs.unit-tests.outputs.unit_tests_result == 'false' && !contains( github.event.pull_request.labels.*.name, 'unit-tests-restiction') }}
-      uses: actions-ecosystem/action-add-labels@v1
-      with:
-        labels: |
-          unit-tests-restiction
-        github_token: '${{ secrets.NSLHB_TEST_TOKEN }}' 
+
       
       
 #    - name: test
