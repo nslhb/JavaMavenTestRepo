@@ -12,7 +12,6 @@ on:
       - '**.md'
       - 'OWNERS'
       - 'OWNERS_ALIASES'
-
 jobs:
   pr-metadata-labels:
     runs-on: ubuntu-latest
