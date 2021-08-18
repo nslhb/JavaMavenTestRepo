@@ -18,10 +18,6 @@ jobs:
             PULL_REQUEST_BODY: "```release-note \n ```"
             PASS_IF_EXISTS: true
             PULL_REQUEST_UPDATE: true
-    - name: PR Body 
-      run: |
-        NEW_PR_BODY=`curl https://api.github.com/repos/nslhb/javamaventestrepo/pulls/${RECENT_PULL_REQUEST_NUMBER} | grep body | cut -d'"' -f4`
-        echo ${NEW_PR_BODY}
   auto-update:
     runs-on: ubuntu-latest
     steps:
