@@ -9,8 +9,8 @@ aliases:
     - NaveenVastare
   dev-approvers:
     - taruneswar-valeti
-  dev-qa-reviewers:
+  qa-reviewers:
     - taruneswar-valeti
     - ankitrajakbrane
-  dev-qa-approvers:
+  qa-approvers:
     - AsishVenakataSai    
