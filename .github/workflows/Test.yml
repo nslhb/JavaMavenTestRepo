@@ -1,16 +1,31 @@
 name: post-pr-merge-workflow
 on: 
-  push:
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
     branches:
-      - main    
+      - prod   
 jobs:
   post-pr:
     runs-on: ubuntu-latest 
     steps:
-    - name: update-pull-request
-      uses: kt3k/update-pr-description@v1.0.1
+    - name: MainBranch Checkout
+      uses: actions/checkout@v2
       with:
-        pr_body: |
-                test
-        destination_branch: prod
-        github_token: ${{ secrets.GITHUB_TOKEN }}
+          ref: main
+    - name: PR Body 
+      run: |
+         NEW_PR_BODY=`sed -n -e '1p;$p' README.md`
+#        NEW_PR_BODY=`curl https://api.github.com/repos/nslhb/javamaventestrepo/pulls/${RECENT_PULL_REQUEST_NUMBER} | grep body | cut -d'"' -f4`
+#        echo ${NEW_PR_BODY}
+    - uses: tzkhan/pr-update-action@v2
+      with:
+        repo-token: "${{ secrets.NSLHB_TEST_TOKEN  }}"
+        base-branch-regex: 'prod'
+        head-branch-regex: 'main'
+        body-template: |
+          ${NEW_PR_BODY}
+        body-update-action: 'suffix'
+        body-uppercase-base-match: false
