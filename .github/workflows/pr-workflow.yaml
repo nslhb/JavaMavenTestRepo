@@ -23,15 +23,12 @@ jobs:
           labels: |
             STAGE-2
             STAGE-3
-            STAGE-4
           github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
       - name: adding metadata labels
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: |
             do-not-merge/work-in-progress
-            sonar-restriction
-            component-test-restriction
             STAGE-1
           github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
           
@@ -81,7 +78,7 @@ jobs:
         echo "::set-output name=test_result::true"  
        
   sonar-scan:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && contains( github.event.pull_request.labels.*.name, 'sonar-restriction') && always() }}
+    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && always() }}
     runs-on: ubuntu-latest
     outputs:
       sonar_scan_result: ${{ steps.sonar.outputs.sonar_result }}
@@ -114,24 +111,24 @@ jobs:
           mvn clean install -B sonar:sonar -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=nslhb -Dsonar.projectKey=nslhb_JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java -Dsonar.java.binaries=target/classes -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html  -Dsonar.qualitygate.wait=true -Dmaven.test.skip=true 
           echo "::set-output name=sonar_result::true"
           
-  build-image:
-    runs-on: ubuntu-latest
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && !contains( github.event.pull_request.labels.*.name, 'sonar-restriction') && always() }}
-    needs: sonar-scan
-    steps:
-     - name: cloning     
-       uses: actions/checkout@v2
-     - name: Step 1 - MainBranch Checkout
-       uses: actions/checkout@v2
-     - name: Step 2 - JDK SETUP
-       uses: actions/setup-java@v2
-       with:
-         java-version: '15'
-         distribution: 'adopt'
-     - name: Set up Maven
-       uses: stCarolas/setup-maven@v4
-       with:
-         maven-version: 3.8.1
+#  build-image:
+#    runs-on: ubuntu-latest
+#    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && always() }}
+#    needs: sonar-scan
+#    steps:
+#     - name: cloning     
+#       uses: actions/checkout@v2
+#     - name: Step 1 - MainBranch Checkout
+#       uses: actions/checkout@v2
+#     - name: Step 2 - JDK SETUP
+#       uses: actions/setup-java@v2
+#       with:
+#         java-version: '15'
+#         distribution: 'adopt'
+#     - name: Set up Maven
+#       uses: stCarolas/setup-maven@v4
+#       with:
+#         maven-version: 3.8.1
      - name: Install aws-cli
        uses: unfor19/install-aws-cli-action@v1
        
@@ -182,7 +179,7 @@ jobs:
           
   sonar-pr-labeler:
     runs-on: ubuntu-latest
-    if: always()
+    if: ${{ (needs.sonar-scan.outputs.sonar_scan_result == 'false' || needs.sonar-scan.outputs.sonar_scan_result == 'true' ) && always() }}
     needs: sonar-scan
     steps:
       - name: adding fail comments
@@ -203,17 +200,25 @@ jobs:
           repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true     
-      - name: removing sonar-restiction label
-        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'true' && contains( github.event.pull_request.labels.*.name, 'sonar-gate-restiction' ) }}
+      - name: removing STAGE-2 label
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
         uses: actions-ecosystem/action-remove-labels@v1
         with:
-          labels: |
-            sonar-gate-restiction
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+           labels: |
+            STAGE-2
+           github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+      - name: adding STAGE-1 label and WIP label
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+           labels: |
+            STAGE-1
+            do-not-merge/work-in-progress
+           github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'           
       
   unit-tests-pr-labeler:
     runs-on: ubuntu-latest
-    if: always()
+    if: ${{ (needs.unit-tests.outputs.unit_tests_result == 'true' || needs.unit-tests.outputs.unit_tests_result == 'false') && always() }} 
     needs: unit-tests
     steps:         
     - name: removing failed label
