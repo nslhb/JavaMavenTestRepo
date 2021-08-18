@@ -42,28 +42,29 @@ jobs:
 #      with:
 #        scanMetadataReportFile: target/sonar/report-task.txt
 
-    - name: Install aws-cli
-      uses: unfor19/install-aws-cli-action@v1
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
-        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-        aws-region: ap-south-1
+#    - name: Install aws-cli
+#      uses: unfor19/install-aws-cli-action@v1
+#    - name: Configure AWS credentials
+#      uses: aws-actions/configure-aws-credentials@v1
+#      with:
+#        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#        aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+#        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+#        aws-region: ap-south-1
         
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+#    - name: Login to Amazon ECR
+#      id: login-ecr
+#      uses: aws-actions/amazon-ecr-login@v1
         
     - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
       id: jib_image
       run: | 
          ls -la 
          cat ~/.m2/settings.xml
-         export DOCKER_CLI_EXPERIMENTAL=enabled
-         sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>dev-${{ github.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
-         docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:dev-${{ github.sha }}      
+         mvn package deploy -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/nslhb/snapshot -Dmaven.test.skip=true
+#         export DOCKER_CLI_EXPERIMENTAL=enabled
+#         sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>dev-${{ github.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
+#         docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:dev-${{ github.sha }}      
 #        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 755502957828.dkr.ecr.ap-south-1.amazonaws.com
     - name: autoupdate
       uses: docker://chinthakagodawita/autoupdate-action:v1
