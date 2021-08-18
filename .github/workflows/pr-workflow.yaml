@@ -54,7 +54,7 @@ jobs:
           
           
   unit-tests:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-1') && always() }}
+    if: ${{ (github.event.action == 'opened' | github.event.action == 'reopened' | contains( github.event.pull_request.labels.*.name, 'STAGE-1') ) && always() }}
     needs: [pr-metadata-labels]
     runs-on: ubuntu-latest
     outputs:
