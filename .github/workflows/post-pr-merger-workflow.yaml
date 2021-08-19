@@ -9,16 +9,27 @@ jobs:
   readme-update:
     if: ${{ github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
-    steps:
+    steps:   
+      - name: Login
+        uses: atlassian/gajira-login@master
+        env:
+          JIRA_BASE_URL: https://fractalenterprises.atlassian.net
+          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+          JIRA_API_TOKEN: ${{ secrets.JIRA_TOKEN }}
+
       - name: MainBranch Checkout
         uses: actions/checkout@v2
         with:
           ref: main
+      - name: Finding JIRA tickets
+        uses: atlassian/gajira-find-issue-key@master
+        with:
+          string: ${{ github.event.ref }}
       - uses: DamianReeves/write-file-action@v1.0
         with:
-          path: Dockerfile
+          path: README.md
           contents: |
-            pr-${{ github.event.pull_request.number }} is merged
+            branch echo ${{ github.head_ref }} , pr-${{ github.event.pull_request.number }} is merged , Jira Tickets Linked -
           write-mode: append
       - name: Commit changed files
         uses: stefanzweifel/git-auto-commit-action@v2.3.0
