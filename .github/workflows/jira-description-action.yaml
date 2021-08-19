@@ -22,7 +22,8 @@ jobs:
       - name: Finding JIRA tickets
         uses: atlassian/gajira-find-issue-key@master
         with:
-          string: ${{ join( github.event.pull_request.title , github.event.pull_request.body ) }}
+          string: ${{ github.event.pull_request.body  }}        
+#          string: ${{ join( github.event.pull_request.title , github.event.pull_request.body ) }}
 #          from: branch,commit
 #      - name: jira-description
 #        uses: cakeinpanic/jira-description-action@v0.3.0
