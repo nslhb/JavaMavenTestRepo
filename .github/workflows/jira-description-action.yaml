@@ -22,7 +22,7 @@ jobs:
       - name: Finding JIRA tickets in title
         uses: atlassian/gajira-find-issue-key@master
         with:
-          string: ${{ github.event.pull_request.title  }}        
+          string: "12"       
           
       - name: Finding JIRA tickets in branch
         uses: atlassian/gajira-find-issue-key@master
