@@ -18,15 +18,28 @@ jobs:
 
       - name: MainBranch Checkout
         uses: actions/checkout@v2
-
-      - name: Finding JIRA tickets
-        uses: cybervoid/gajira-get-issue@v1.0
-        with:
-          input-text: ${{ github.event.pull_request.body  }}   
-      - name: Finding JIRA tickets
+  
+      - name: Finding JIRA tickets in title
         uses: atlassian/gajira-find-issue-key@master
         with:
-          string: ${{ github.event.pull_request.body  }}        
+          string: ${{ github.event.pull_request.title  }}        
+          
+      - name: Finding JIRA tickets in branch
+        uses: atlassian/gajira-find-issue-key@master
+        with:
+          from: branch
+
+      - name: Finding JIRA tickets in commit
+        uses: atlassian/gajira-find-issue-key@master
+        with:
+          from: commits
+          
+      - name: JIRA issues
+        run: |
+          if [ ! -f "~/jira/config.yml" ] 
+          then
+            exit 1
+          fi 
 #          string: ${{ join( github.event.pull_request.title , github.event.pull_request.body ) }}
 #          from: branch,commit
 #      - name: jira-description
