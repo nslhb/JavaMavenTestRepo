@@ -1,4 +1,4 @@
-name: post-pr-merge-workflow
+name: qa-pr-workflow
 on: 
   pull_request:
     types:
