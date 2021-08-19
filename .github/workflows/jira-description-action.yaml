@@ -47,7 +47,7 @@ jobs:
         id: jira-description-action
         with:
           github-token: ${{ secrets.NSLHB_TEST_TOKEN }}
-          jira-token: ${{ secrets.JIRA_TOKEN }}
+          jira-token: ${{ secrets.NSLHB_JIRA_TOKEN }}
           jira-base-url: https://fractalenterprises.atlassian.net
           use: both
           custom-issue-number-regexp: '^[A-Z]+-\d+' 
