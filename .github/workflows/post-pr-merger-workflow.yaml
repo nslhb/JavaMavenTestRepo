@@ -40,7 +40,7 @@ jobs:
           branch: main
           file_pattern: README.md
         env:
-          GITHUB_TOKEN: ${{ secrets.NSLHB_TEST_TOKEN }} 
+          GITHUB_TOKEN: ${{ secrets.NSLHB_GITHUB_TOKEN }} 
           
           
 #  post-pr:
