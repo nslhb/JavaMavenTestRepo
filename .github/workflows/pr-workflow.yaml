@@ -54,7 +54,7 @@ jobs:
           
           
   unit-tests:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-1') && always() }}
+    if: ${{ ( contains( github.event.pull_request.labels.*.name, 'STAGE-1') || github.event.action == 'opened' || github.event.action == 'reopened' ) && always() }}
     needs: [pr-metadata-labels]
     runs-on: ubuntu-latest
     outputs:
@@ -78,8 +78,8 @@ jobs:
         mvn test
         echo "::set-output name=test_result::true"  
        
-  sonar-scan:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && always() }}
+  sonar-scan_and_build-image:
+    if: ${{ github.event.action == 'unlabeled' && contains( github.event.pull_request.labels.*.name, 'STAGE-2') && always() }}
     runs-on: ubuntu-latest
     outputs:
       sonar_scan_result: ${{ steps.sonar.outputs.sonar_result }}
@@ -181,7 +181,7 @@ jobs:
   sonar-pr-labeler:
     runs-on: ubuntu-latest
     if: ${{ (needs.sonar-scan.outputs.sonar_scan_result == 'false' || needs.sonar-scan.outputs.sonar_scan_result == 'true' ) && always() }}
-    needs: sonar-scan
+    needs: sonar-scan_and_build-image
     steps:
       - name: adding fail comments
         if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
