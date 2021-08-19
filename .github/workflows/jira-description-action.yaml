@@ -46,7 +46,7 @@ jobs:
         uses: cakeinpanic/jira-description-action@v0.3.0
         id: jira-description-action
         with:
-          github-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          github-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
           jira-token: ${{ secrets.NSLHB_JIRA_TOKEN }}
           jira-base-url: https://fractalenterprises.atlassian.net
           use: both

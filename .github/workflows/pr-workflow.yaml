@@ -24,14 +24,14 @@ jobs:
           labels: |
             STAGE-2
             STAGE-3
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'
       - name: adding metadata labels
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: |
             do-not-merge/work-in-progress
             STAGE-1
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'  
           
   stage-1-labeler:
     runs-on: ubuntu-latest  
@@ -43,14 +43,14 @@ jobs:
         with:
           labels: |
            STAGE-1
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'  
       - name: adding STAGE-2 label
         if: ${{ !contains( join(github.event.pull_request.labels.*.name, ','), 'do-not-merge') }}
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: |
            STAGE-2
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'       
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'       
           
           
   unit-tests:
@@ -100,12 +100,12 @@ jobs:
      - name: Setting Maven settings.xml
        uses: whelk-io/maven-settings-xml-action@v16
        with:
-         repositories: '[{ "id": "github", "url":  "${{ secrets.MAVEN_PACKAGE_REPO }}", "snapshots.enabled": "true" }]'
-         servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.NSLHB_TEST_TOKEN }}" }]'
+         repositories: '[{ "id": "github", "url":  "${{ secrets.NSLHB_MAVEN_PACKAGE_REPO }}", "snapshots.enabled": "true" }]'
+         servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.NSLHB_GITHUB_TOKEN }}" }]'
      - name: SonarCloud Scan
        id: sonar
        env:
-         GITHUB_TOKEN: ${{ secrets.NSLHB_TEST_TOKEN }} 
+         GITHUB_TOKEN: ${{ secrets.NSLHB_GITHUB_TOKEN }} 
          SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
        run: |
           echo "::set-output name=sonar_result::false"    
@@ -162,7 +162,7 @@ jobs:
        with:
           message: |
             Custom-Image 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }} is built.
-          repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true
      - name: removing STAGE-2 label
@@ -170,13 +170,13 @@ jobs:
        with:
           labels: |
            STAGE-2
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'
      - name: adding STAGE-3 label
        uses: actions-ecosystem/action-add-labels@v1
        with:
           labels: |
            STAGE-3
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'  
           
   sonar-pr-labeler:
     runs-on: ubuntu-latest
@@ -189,7 +189,7 @@ jobs:
         with:
           message: |
             Sonar Gate Failed 
-          repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true  
       - name: adding pass comments
@@ -198,7 +198,7 @@ jobs:
         with:
           message: |
             Sonar Gate Passed 
-          repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true     
       - name: removing STAGE-2 label
@@ -207,7 +207,7 @@ jobs:
         with:
            labels: |
             STAGE-2
-           github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+           github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'
       - name: adding STAGE-1 label and WIP label
         if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
         uses: actions-ecosystem/action-add-labels@v1
@@ -215,7 +215,7 @@ jobs:
            labels: |
             STAGE-1
             do-not-merge/work-in-progress
-           github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'           
+           github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'           
       
   unit-tests-pr-labeler:
     runs-on: ubuntu-latest
@@ -228,14 +228,14 @@ jobs:
       with:
         labels: |
           unit-tests-restiction
-        github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+        github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'
     - name: adding passed comments
       if: ${{ needs.unit-tests.outputs.unit_tests_result == 'true' }}
       uses: mshick/add-pr-comment@v1
       with:
         message: |
           Unit Tests Passed 
-        repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+        repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
         repo-token-user-login: 'github-actions[bot]' 
         allow-repeats: true    
     - name: adding failed comments
@@ -244,7 +244,7 @@ jobs:
       with:
         message: |
           Unit Tests Failed 
-        repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+        repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
         repo-token-user-login: 'github-actions[bot]' 
         allow-repeats: true
 
