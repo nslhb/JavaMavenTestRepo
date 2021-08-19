@@ -10,22 +10,22 @@ jobs:
     if: ${{ github.event.pull_request.merged == true }}
     runs-on: ubuntu-latest
     steps:   
-      - name: Login
-        uses: atlassian/gajira-login@master
-        env:
-          JIRA_BASE_URL: https://fractalenterprises.atlassian.net
-          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
-          JIRA_API_TOKEN: ${{ secrets.JIRA_TOKEN }}
+#      - name: Login
+#        uses: atlassian/gajira-login@master
+#        env:
+#          JIRA_BASE_URL: https://fractalenterprises.atlassian.net
+#          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+#          JIRA_API_TOKEN: ${{ secrets.JIRA_TOKEN }}
 
       - name: MainBranch Checkout
         uses: actions/checkout@v2
         with:
           ref: main
-      - name: Finding JIRA tickets
-        uses: atlassian/gajira-find-issue-key@master
-        with:
-          string: join( github.event.pull_request.title , github.event.pull_request.body )
-          from: branch,commit
+#      - name: Finding JIRA tickets
+#        uses: atlassian/gajira-find-issue-key@master
+#        with:
+#          string: join( github.event.pull_request.title , github.event.pull_request.body )
+#          from: branch,commit
           
       - uses: DamianReeves/write-file-action@v1.0
         with:
