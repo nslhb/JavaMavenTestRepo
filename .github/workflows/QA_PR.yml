@@ -6,7 +6,7 @@ on:
       - reopened
       - synchronize
     branches:
-      - prod   
+      - prod-not   
 jobs:
   post-pr:
     runs-on: ubuntu-latest 
