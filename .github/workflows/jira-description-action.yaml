@@ -20,6 +20,10 @@ jobs:
         uses: actions/checkout@v2
 
       - name: Finding JIRA tickets
+        uses: cybervoid/gajira-get-issue@v1.0
+        with:
+          input-text: ${{ github.event.pull_request.body  }}   
+      - name: Finding JIRA tickets
         uses: atlassian/gajira-find-issue-key@master
         with:
           string: ${{ github.event.pull_request.body  }}        
