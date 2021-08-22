@@ -54,7 +54,7 @@ jobs:
           
           
   unit-tests:
-    if: ${{ ( contains( github.event.pull_request.labels.*.name, 'STAGE-1') || github.event.action != 'unlabeled' ) && always() }}
+    if: ${{ ( github.event.action != 'unlabeled' ) && always() }}
     needs: [pr-metadata-labels]
     runs-on: ubuntu-latest
     outputs:
