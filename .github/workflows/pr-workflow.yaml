@@ -151,7 +151,7 @@ jobs:
      
      - name: test
        run: |
-          sed -i "s#repositories {#repositories {\n    maven {\n	 credentials {\n            username '${{ secrets.TEST_USER }}'\n            password '${{ secrets.TEST_PASSWORD }}'\n        }\n        url \"${{ secrets.TEST_PACKAGE }}\"\n    }\n    maven {\n        url \"https://jitpack.io\" \n	}\n#" build.gradle  && echo "jib {\r\n  from {\r\n    image = 'openjdk'\r\n    platforms {\r\n      platform {\r\n        architecture = 'amd64'\r\n        os = 'linux'\r\n      }\r\n      platform {\r\n        architecture = 'arm64'\r\n        os = 'linux'\r\n      }\r\n    }\r\n   }\r\n\r\n  to {\r\n    image = '832807087073.dkr.ecr.ap-south-1.amazonaws.com/test'\r\n    tags = ['dev-1', 'dev-2']\r\n  }\r\n}\r\n" >> build.gradle && cat build.gradle && gradle jib -x test
+          sed -i "s#repositories {#repositories {\n    maven {\n	 credentials {\n            username '${{ secrets.TEST_USER }}'\n            password '${{ secrets.TEST_PASSWORD }}'\n        }\n        url \"${{ secrets.TEST_PACKAGE }}\"\n    }\n    maven {\n        url \"https://jitpack.io\" \n	}\n#" build.gradle  && echo "jib {\n  from {\n    image = 'openjdk'\n    platforms {\n      platform {\n        architecture = 'amd64'\n        os = 'linux'\n      }\n      platform {\n        architecture = 'arm64'\n        os = 'linux'\n      }\n    }\n   }\n\n  to {\n    image = '832807087073.dkr.ecr.ap-south-1.amazonaws.com/test'\n    tags = ['dev-1', 'dev-2']\n  }\n}\n" >> build.gradle && cat build.gradle && gradle jib -x test
           docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:dev-1
     
      - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
