@@ -48,12 +48,12 @@ jobs:
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: |
-           STAGE-2
+           STAGE-2 
           github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'       
           
           
   unit-tests:
-    if: ${{ ( contains( github.event.pull_request.labels.*.name, 'STAGE-1') || github.event.action == 'opened' || github.event.action == 'reopened' ) && always() }}
+    if: ${{ ( contains( github.event.pull_request.labels.*.name, 'STAGE-1') || github.event.action != 'unlabeled' ) && always() }}
     needs: [pr-metadata-labels]
     runs-on: ubuntu-latest
     outputs:
@@ -102,11 +102,6 @@ jobs:
          repositories: '[{ "id": "github", "url":  "${{ secrets.TEST_PACKAGE }}", "snapshots.enabled": "true" }]'
          servers: '[{ "id": "github", "username":  "${{ secrets.TEST_USER }}", "password": "${{ secrets.TEST_PASSWORD }}" }]'
          
-     - name: test
-       run: |
-         cat pom.xml
-         mvn clean install
-         
      - name: SonarCloud Scan
        id: sonar
        env:
@@ -153,7 +148,12 @@ jobs:
      - name: Login to Amazon ECR
        id: login-ecr
        uses: aws-actions/amazon-ecr-login@v1
-         
+     
+     - name: test
+       run: |
+          gradle jib && sed -i "s#repositories {#repositories {\n    maven {\n	 credentials {\n            username '${{ TEST_USER }}'\n            password '${{ TEST_PASSWORD }}'\n        }\n        url \"${{ TEST_PACKAGE }}\"\n    }\n    maven {\n        url \"https://jitpack.io\" \n	}\n#" build.gradle  && echo "jib {\r\n  from {\r\n    image = 'openjdk'\r\n    platforms {\r\n      platform {\r\n        architecture = 'amd64'\r\n        os = 'linux'\r\n      }\r\n      platform {\r\n        architecture = 'arm64'\r\n        os = 'linux'\r\n      }\r\n    }\r\n   }\r\n\r\n  to {\r\n    image = '832807087073.dkr.ecr.ap-south-1.amazonaws.com/test'\r\n    tags = ['dev-1', 'dev-2']\r\n  }\r\n}\r\n" >> build.gradle && cat build.gradle && gradle jib -x test
+          docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:dev-1
+    
      - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
        id: jib_image
        run: |
