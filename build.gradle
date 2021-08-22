@@ -82,7 +82,7 @@ test {
 }
 
 gradleLint {
-  rules=['all-dependency']
+  rules=['unused-dependencies']
 }
 
 tasks.withType(JavaCompile) {
