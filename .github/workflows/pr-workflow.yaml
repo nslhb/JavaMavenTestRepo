@@ -157,7 +157,7 @@ jobs:
           cat ~/.m2/settings.xml
           export DOCKER_CLI_EXPERIMENTAL=enabled
           sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>755502957828.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>java-maven-test-01</tag><tag>${{ github.event.pull_request.head.ref }}</tag><tag>pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
-          docker manifest inspect 755502957828.dkr.ecr.ap-south-1.amazonaws.com/test:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
+#          docker manifest inspect 755502957828.dkr.ecr.ap-south-1.amazonaws.com/test:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
     
      - name: test
        run: |
