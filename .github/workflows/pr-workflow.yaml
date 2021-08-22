@@ -156,19 +156,19 @@ jobs:
           ls -la 
           cat ~/.m2/settings.xml
           export DOCKER_CLI_EXPERIMENTAL=enabled
-          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>java-maven-test-01</tag><tag>${{ github.event.pull_request.head.ref }}</tag><tag>pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
-          docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
+          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>755502957828.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>java-maven-test-01</tag><tag>${{ github.event.pull_request.head.ref }}</tag><tag>pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
+          docker manifest inspect 755502957828.dkr.ecr.ap-south-1.amazonaws.com/test:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
     
      - name: test
        run: |
-          sed -i "s#repositories {#jib {\n  from {\n    image = 'openjdk'\n    platforms {\n      platform {\n        architecture = 'amd64'\n        os = 'linux'\n      }\n      platform {\n        architecture = 'arm64'\n        os = 'linux'\n      }\n    }\n   }\n\n  to {\n    image = '832807087073.dkr.ecr.ap-south-1.amazonaws.com/test'\n    tags = ['dev-1', 'dev-2']\n  }\n}\nrepositories {\n    maven {\n	 credentials {\n            username '${{ secrets.TEST_USER }}'\n            password '${{ secrets.TEST_PASSWORD }}'\n        }\n        url \"${{ secrets.TEST_PACKAGE }}\"\n    }\n    maven {\n        url \"https://jitpack.io\" \n	}\n#" build.gradle  && cat build.gradle && gradle jib -x test
-          docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:dev-1
+          sed -i "s#repositories {#jib {\n  from {\n    image = 'openjdk'\n    platforms {\n      platform {\n        architecture = 'amd64'\n        os = 'linux'\n      }\n      platform {\n        architecture = 'arm64'\n        os = 'linux'\n      }\n    }\n   }\n\n  to {\n    image = '755502957828.dkr.ecr.ap-south-1.amazonaws.com/test'\n    tags = ['dev-1', 'dev-2']\n  }\n}\nrepositories {\n    maven {\n	 credentials {\n            username '${{ secrets.TEST_USER }}'\n            password '${{ secrets.TEST_PASSWORD }}'\n        }\n        url \"${{ secrets.TEST_PACKAGE }}\"\n    }\n    maven {\n        url \"https://jitpack.io\" \n	}\n#" build.gradle  && cat build.gradle && gradle jib -x test
+          docker manifest inspect 755502957828.dkr.ecr.ap-south-1.amazonaws.com/test:dev-1
         
      - name: adding image built comments
        uses: mshick/add-pr-comment@v1
        with:
           message: |
-            Custom-Image 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }} is built.
+            Custom-Image 755502957828.dkr.ecr.ap-south-1.amazonaws.com/test:pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }} is built.
           repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true
