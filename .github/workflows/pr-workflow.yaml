@@ -100,8 +100,8 @@ jobs:
      - name: Setting Maven settings.xml
        uses: whelk-io/maven-settings-xml-action@v16
        with:
-         repositories: '[{ "id": "github", "url":  "${{ secrets.NSLHB_MAVEN_PACKAGE_REPO }}", "snapshots.enabled": "true" }]'
-         servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.NSLHB_GITHUB_TOKEN }}" }]'
+         repositories: '[{ "id": "github", "url":  "${{ secrets.TEST_PACKAGE }}", "snapshots.enabled": "true" }]'
+         servers: '[{ "id": "github", "username":  "${{ secrets.TEST_USER }}", "password": "${{ secrets.TEST_PASSWORD }}" }]'
      - name: SonarCloud Scan
        id: sonar
        env:
