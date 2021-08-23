@@ -1,6 +1,6 @@
 approvers:
-- dev-approvers
+- qa-approvers
 reviewers:
-- dev-reviewers
+- qa-reviewers
 labels:
-- dev
+- qa
