@@ -1,5 +1,4 @@
 name: pr-workflow
-concurrency: pr-${{ github.event.pull_request.head.sha }}
 on:
   pull_request:
     types:
@@ -25,17 +24,14 @@ jobs:
           labels: |
             STAGE-2
             STAGE-3
-            STAGE-4
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'
       - name: adding metadata labels
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: |
             do-not-merge/work-in-progress
-            sonar-restriction
-            component-test-restriction
             STAGE-1
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'  
           
   stage-1-labeler:
     runs-on: ubuntu-latest  
@@ -47,18 +43,18 @@ jobs:
         with:
           labels: |
            STAGE-1
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'  
       - name: adding STAGE-2 label
         if: ${{ !contains( join(github.event.pull_request.labels.*.name, ','), 'do-not-merge') }}
         uses: actions-ecosystem/action-add-labels@v1
         with:
           labels: |
-           STAGE-2
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'       
+           STAGE-2 
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'       
           
           
   unit-tests:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-1') && always() }}
+    if: ${{ ( github.event.action != 'unlabeled' ) && always() }}
     needs: [pr-metadata-labels]
     runs-on: ubuntu-latest
     outputs:
@@ -82,8 +78,8 @@ jobs:
         mvn test
         echo "::set-output name=test_result::true"  
        
-  sonar-scan:
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && contains( github.event.pull_request.labels.*.name, 'sonar-restriction') && always() }}
+  sonar-scan_and_build-image:
+    if: ${{ github.event.action == 'unlabeled' && contains( github.event.pull_request.labels.*.name, 'STAGE-2') && always() }}
     runs-on: ubuntu-latest
     outputs:
       sonar_scan_result: ${{ steps.sonar.outputs.sonar_result }}
@@ -104,64 +100,77 @@ jobs:
      - name: Setting Maven settings.xml
        uses: whelk-io/maven-settings-xml-action@v16
        with:
-         repositories: '[{ "id": "github", "url":  "${{ secrets.MAVEN_PACKAGE_REPO }}", "snapshots.enabled": "true" }]'
-         servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.NSLHB_TEST_TOKEN }}" }]'
-     - name: SonarCloud Scan
-       id: sonar
-       env:
-         GITHUB_TOKEN: ${{ secrets.NSLHB_TEST_TOKEN }} 
-         SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
-       run: |
-          echo "::set-output name=sonar_result::false"    
-          mvn clean install -B sonar:sonar -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=nslhb -Dsonar.projectKey=nslhb_JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java -Dsonar.java.binaries=target/classes -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html  -Dsonar.qualitygate.wait=true -Dmaven.test.skip=true 
-          echo "::set-output name=sonar_result::true"
+         repositories: '[{ "id": "github", "url":  "${{ secrets.TEST_PACKAGE }}", "snapshots.enabled": "true" }]'
+         servers: '[{ "id": "github", "username":  "${{ secrets.TEST_USER }}", "password": "${{ secrets.TEST_PASSWORD }}" }]'
+         
+#     - name: SonarCloud Scan
+#       id: sonar
+#       env:
+#         GITHUB_TOKEN: ${{ secrets.NSLHB_GITHUB_TOKEN }} 
+#         SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
+#       run: |
+#          echo "::set-output name=sonar_result::false"    
+#          mvn clean install -B sonar:sonar -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=nslhb -Dsonar.projectKey=nslhb_JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java -Dsonar.java.binaries=target/classes -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html  -Dsonar.qualitygate.wait=true -Dmaven.test.skip=true 
+#          echo "::set-output name=sonar_result::true"
           
-  build-image:
-    runs-on: ubuntu-latest
-    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && !contains( github.event.pull_request.labels.*.name, 'sonar-restriction') && always() }}
-    needs: sonar-scan
-    steps:
-     - name: cloning     
-       uses: actions/checkout@v2
-     - name: Step 1 - MainBranch Checkout
-       uses: actions/checkout@v2
-     - name: Step 2 - JDK SETUP
-       uses: actions/setup-java@v2
-       with:
-         java-version: '15'
-         distribution: 'adopt'
-     - name: Set up Maven
-       uses: stCarolas/setup-maven@v4
-       with:
-         maven-version: 3.8.1
+#  build-image:
+#    runs-on: ubuntu-latest
+#    if: ${{ contains( github.event.pull_request.labels.*.name, 'STAGE-2') && always() }}
+#    needs: sonar-scan
+#    steps:
+#     - name: cloning     
+#       uses: actions/checkout@v2
+#     - name: Step 1 - MainBranch Checkout
+#       uses: actions/checkout@v2
+#     - name: Step 2 - JDK SETUP
+#       uses: actions/setup-java@v2
+#       with:
+#         java-version: '15'
+#         distribution: 'adopt'
+#     - name: Set up Maven
+#       uses: stCarolas/setup-maven@v4
+#       with:
+#         maven-version: 3.8.1
      - name: Install aws-cli
        uses: unfor19/install-aws-cli-action@v1
+       
      - name: Configure AWS credentials
        uses: aws-actions/configure-aws-credentials@v1
        with:
          aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
          aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
          aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-         aws-region: ap-south-1
+         aws-region: ap-south-1   
+#     - name: Edit docker/config creds
+#       run: |
+#         rm -rf ~/.docker/config.json
+#         echo ${{ secrets.PUBLIC_ECR_CREDS }} >> ~/.docker/config.json
         
      - name: Login to Amazon ECR
        id: login-ecr
        uses: aws-actions/amazon-ecr-login@v1
-         
+     
+
      - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
        id: jib_image
-       run: | 
+       run: |
           ls -la 
           cat ~/.m2/settings.xml
           export DOCKER_CLI_EXPERIMENTAL=enabled
-          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/dev</image><tags><tag>${{ github.event.pull_request.head.ref }}</tag><tag>${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
-          docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/dev:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
+          sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>755502957828.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>java-maven-test-01</tag><tag>${{ github.event.pull_request.head.ref }}</tag><tag>pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }}</tag></tags></to><from><image>openjdk</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
+#          docker manifest inspect 755502957828.dkr.ecr.ap-south-1.amazonaws.com/test:${{github.event.number}}-${{ github.event.pull_request.head.sha }}   
+    
+     - name: test
+       run: |
+          sed -i "s#repositories {#jib {\n  from {\n    image = 'openjdk'\n    platforms {\n      platform {\n        architecture = 'amd64'\n        os = 'linux'\n      }\n      platform {\n        architecture = 'arm64'\n        os = 'linux'\n      }\n    }\n   }\n\n  to {\n    image = '755502957828.dkr.ecr.ap-south-1.amazonaws.com/test'\n    tags = ['dev-1', 'dev-2']\n  }\n}\nrepositories {\n    maven {\n	 credentials {\n            username '${{ secrets.TEST_USER }}'\n            password '${{ secrets.TEST_PASSWORD }}'\n        }\n        url \"${{ secrets.TEST_PACKAGE }}\"\n    }\n    maven {\n        url \"https://jitpack.io\" \n	}\n#" build.gradle  && cat build.gradle && gradle jib -x test
+          docker manifest inspect 755502957828.dkr.ecr.ap-south-1.amazonaws.com/test:dev-1
+        
      - name: adding image built comments
        uses: mshick/add-pr-comment@v1
        with:
           message: |
-            Custom-Image 832807087073.dkr.ecr.ap-south-1.amazonaws.com/dev:${{github.event.number}}-${{ github.event.pull_request.head.sha }} is built.
-          repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+            Custom-Image 755502957828.dkr.ecr.ap-south-1.amazonaws.com/test:pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }} is built.
+          repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true
      - name: removing STAGE-2 label
@@ -169,18 +178,18 @@ jobs:
        with:
           labels: |
            STAGE-2
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'
      - name: adding STAGE-3 label
        uses: actions-ecosystem/action-add-labels@v1
        with:
           labels: |
            STAGE-3
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'  
+          github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'  
           
   sonar-pr-labeler:
     runs-on: ubuntu-latest
-    if: always()
-    needs: sonar-scan
+    if: ${{ (needs.sonar-scan.outputs.sonar_scan_result == 'false' || needs.sonar-scan.outputs.sonar_scan_result == 'true' ) && always() }}
+    needs: sonar-scan_and_build-image
     steps:
       - name: adding fail comments
         if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
@@ -188,7 +197,7 @@ jobs:
         with:
           message: |
             Sonar Gate Failed 
-          repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true  
       - name: adding pass comments
@@ -197,20 +206,28 @@ jobs:
         with:
           message: |
             Sonar Gate Passed 
-          repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+          repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
           repo-token-user-login: 'github-actions[bot]' 
           allow-repeats: true     
-      - name: removing sonar-restiction label
-        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'true' && contains( github.event.pull_request.labels.*.name, 'sonar-gate-restiction' ) }}
+      - name: removing STAGE-2 label
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
         uses: actions-ecosystem/action-remove-labels@v1
         with:
-          labels: |
-            sonar-gate-restiction
-          github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+           labels: |
+            STAGE-2
+           github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'
+      - name: adding STAGE-1 label and WIP label
+        if: ${{ needs.sonar-scan.outputs.sonar_scan_result == 'false' }}
+        uses: actions-ecosystem/action-add-labels@v1
+        with:
+           labels: |
+            STAGE-1
+            do-not-merge/work-in-progress
+           github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'           
       
   unit-tests-pr-labeler:
     runs-on: ubuntu-latest
-    if: always()
+    if: ${{ (needs.unit-tests.outputs.unit_tests_result == 'true' || needs.unit-tests.outputs.unit_tests_result == 'false') && always() }} 
     needs: unit-tests
     steps:         
     - name: removing failed label
@@ -219,14 +236,14 @@ jobs:
       with:
         labels: |
           unit-tests-restiction
-        github_token: '${{ secrets.NSLHB_TEST_TOKEN }}'
+        github_token: '${{ secrets.NSLHB_GITHUB_TOKEN }}'
     - name: adding passed comments
       if: ${{ needs.unit-tests.outputs.unit_tests_result == 'true' }}
       uses: mshick/add-pr-comment@v1
       with:
         message: |
           Unit Tests Passed 
-        repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+        repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
         repo-token-user-login: 'github-actions[bot]' 
         allow-repeats: true    
     - name: adding failed comments
@@ -235,7 +252,7 @@ jobs:
       with:
         message: |
           Unit Tests Failed 
-        repo-token: ${{ secrets.NSLHB_TEST_TOKEN }}
+        repo-token: ${{ secrets.NSLHB_GITHUB_TOKEN }}
         repo-token-user-login: 'github-actions[bot]' 
         allow-repeats: true
 

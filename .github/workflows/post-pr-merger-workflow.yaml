@@ -1,38 +1,76 @@
 name: post-pr-merge-workflow
 on: 
-  push:
+  pull_request:
+    types:
+      - closed
     branches:
       - main
-
 jobs:
-  post-pr:
-    runs-on: ubuntu-latest 
-    steps:
-    - uses: actions/checkout@v2
-      with:
-       fetch-depth: 0
-    - name: JDK SETUP
-      uses: actions/setup-java@v2
-      with:
-        java-version: '11'
-        distribution: 'adopt'        
-    - name: Set up Maven
-      uses: stCarolas/setup-maven@v4
-      with:
-          maven-version: 3.8.1
+  readme-update:
+    if: ${{ github.event.pull_request.merged == true }}
+    runs-on: ubuntu-latest
+    steps:   
+#      - name: Login
+#        uses: atlassian/gajira-login@master
+#        env:
+#          JIRA_BASE_URL: https://fractalenterprises.atlassian.net
+#          JIRA_USER_EMAIL: ${{ secrets.JIRA_USER_EMAIL }}
+#          JIRA_API_TOKEN: ${{ secrets.JIRA_TOKEN }}
 
-    - name: Setting Maven settings.xml
-      uses: whelk-io/maven-settings-xml-action@v16
-      with:
-        repositories: '[{ "id": "github", "url":  "${{ secrets.MAVEN_PACKAGE_REPO }}", "snapshots.enabled": "true" }]'
-        servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.NSLHB_TEST_TOKEN }}" }]'
+      - name: MainBranch Checkout
+        uses: actions/checkout@v2
+        with:
+          ref: main
+#      - name: Finding JIRA tickets
+#        uses: atlassian/gajira-find-issue-key@master
+#        with:
+#          string: join( github.event.pull_request.title , github.event.pull_request.body )
+#          from: branch,commit
+          
+      - uses: DamianReeves/write-file-action@v1.0
+        with:
+          path: README.md
+          contents: |
+            branch echo ${{ github.head_ref }} , pr-${{ github.event.pull_request.number }} is merged
+          write-mode: append
+      - name: Commit changed files
+        uses: stefanzweifel/git-auto-commit-action@v2.3.0
+        with:
+          commit_message: pr data update in readme
+          branch: main
+          file_pattern: README.md
+        env:
+          GITHUB_TOKEN: ${{ secrets.NSLHB_GITHUB_TOKEN }} 
+          
+          
+#  post-pr:
+#    runs-on: ubuntu-latest 
+#    steps:
+#    - uses: actions/checkout@v2
+#      with:
+#       fetch-depth: 0
+#    - name: JDK SETUP
+#      uses: actions/setup-java@v2
+#      with:
+#        java-version: '11'
+#        distribution: 'adopt'        
+#    - name: Set up Maven
+#      uses: stCarolas/setup-maven@v4
+#      with:
+#          maven-version: 3.8.1
 
-    - name: SonarCloud Scan
-      env:
-        GITHUB_TOKEN: ${{ secrets.NSLHB_TEST_TOKEN }} 
-        SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
-      run: |
-         mvn clean install -B sonar:sonar -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=nslhb -Dsonar.projectKey=nslhb_JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java -Dsonar.java.binaries=target/classes -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html  -Dsonar.qualitygate.wait=true
+ #   - name: Setting Maven settings.xml
+ #     uses: whelk-io/maven-settings-xml-action@v16
+ #     with:
+ #       repositories: '[{ "id": "github", "url":  "${{ secrets.MAVEN_PACKAGE_REPO }}", "snapshots.enabled": "true" }]'
+ #       servers: '[{ "id": "github", "username":  "${{ secrets.NSLHB_USER }}", "password": "${{ secrets.NSLHB_TEST_TOKEN }}" }]'
+
+#    - name: SonarCloud Scan
+#      env:
+#        GITHUB_TOKEN: ${{ secrets.NSLHB_TEST_TOKEN }} 
+#        SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
+#      run: |
+#         mvn clean install -B sonar:sonar -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=nslhb -Dsonar.projectKey=nslhb_JavaMavenTestRepo  -Dsonar.projectName=JavaMavenTestRepo  -Dsonar.language=java  -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java -Dsonar.java.binaries=target/classes -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.java.coveragePlugin=jacoco  -Dsonar.jacoco.reportPath=/target/site/jacoco/index.html  -Dsonar.qualitygate.wait=true
 
 #    - name: SonarQube Quality Gate check
 #      uses: sonarsource/sonarqube-quality-gate-action@master
@@ -42,31 +80,32 @@ jobs:
 #      with:
 #        scanMetadataReportFile: target/sonar/report-task.txt
 
-    - name: Install aws-cli
-      uses: unfor19/install-aws-cli-action@v1
-    - name: Configure AWS credentials
-      uses: aws-actions/configure-aws-credentials@v1
-      with:
-        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
-        aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
-        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
-        aws-region: ap-south-1
+#    - name: Install aws-cli
+#      uses: unfor19/install-aws-cli-action@v1
+#    - name: Configure AWS credentials
+#      uses: aws-actions/configure-aws-credentials@v1
+#      with:
+#        aws-access-key-id: ${{ secrets.AWS_ACCESS_KEY_ID }}
+#        aws-secret-access-key: ${{ secrets.AWS_ACCESS_KEY }}
+#        aws-session-token: ${{ secrets.AWS_SESSION_TOKEN }}
+#        aws-region: ap-south-1
         
-    - name: Login to Amazon ECR
-      id: login-ecr
-      uses: aws-actions/amazon-ecr-login@v1
+#    - name: Login to Amazon ECR
+#      id: login-ecr
+#      uses: aws-actions/amazon-ecr-login@v1
         
-    - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
-      id: jib_image
-      run: | 
-         ls -la 
-         cat ~/.m2/settings.xml
-         export DOCKER_CLI_EXPERIMENTAL=enabled
-         sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>dev-${{ github.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
-         docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:dev-${{ github.sha }}      
+#    - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
+#      id: jib_image
+#      run: | 
+#         ls -la 
+#         cat ~/.m2/settings.xml
+#         mvn package deploy -DaltDeploymentRepository=github::default::https://maven.pkg.github.com/nslhb/snapshot -Dmaven.test.skip=true
+#         export DOCKER_CLI_EXPERIMENTAL=enabled
+#         sed -i "s#<plugins>#<plugins><plugin><groupId>com.google.cloud.tools</groupId><artifactId>jib-maven-plugin</artifactId><version>3.0.0</version><configuration><to><image>832807087073.dkr.ecr.ap-south-1.amazonaws.com/test</image><tags><tag>dev-${{ github.sha }}</tag></tags></to><from><image>openjdk:alpine</image><platforms><platform><architecture>amd64</architecture><os>linux</os></platform><platform><architecture>arm64</architecture><os>linux</os></platform></platforms></from></configuration></plugin>#" pom.xml && mvn compile jib:build -Dmaven.test.skip=true 
+#         docker manifest inspect 832807087073.dkr.ecr.ap-south-1.amazonaws.com/test:dev-${{ github.sha }}      
 #        aws ecr get-login-password --region ap-south-1 | docker login --username AWS --password-stdin 755502957828.dkr.ecr.ap-south-1.amazonaws.com
-    - name: autoupdate
-      uses: docker://chinthakagodawita/autoupdate-action:v1
-      env:
-       GITHUB_TOKEN: '${{ secrets.NSLHB_TEST_TOKEN  }}'
-       MERGE_MSG: "Branch was auto-updated with main branch"     
+#    - name: autoupdate
+#      uses: docker://chinthakagodawita/autoupdate-action:v1
+#      env:
+#       GITHUB_TOKEN: '${{ secrets.NSLHB_TEST_TOKEN  }}'
+#       MERGE_MSG: "Branch was auto-updated with main branch"     

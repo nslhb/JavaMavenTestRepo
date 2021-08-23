@@ -1,0 +1,37 @@
+name: qa-pr-workflow
+on: 
+  pull_request:
+    types:
+      - opened
+      - reopened
+      - synchronize
+    branches:
+      - prod   
+jobs:
+  post-pr:
+    runs-on: ubuntu-latest 
+    steps:
+    - name: adding metadata labels
+      uses: actions-ecosystem/action-add-labels@v1
+      with:
+        labels: |
+             needs-ok-to-test
+        github_token: '${{ secrets.NSLHB_TEST_TOKEN }}' 
+#    - name: MainBranch Checkout
+#      uses: actions/checkout@v2
+#      with:
+#          ref: main
+#    - name: PR Body 
+#      run: |
+#         NEW_PR_BODY=`sed -n -e '1p;$p' README.md`
+#        NEW_PR_BODY=`curl https://api.github.com/repos/nslhb/javamaventestrepo/pulls/${RECENT_PULL_REQUEST_NUMBER} | grep body | cut -d'"' -f4`
+#        echo ${NEW_PR_BODY}
+#    - uses: tzkhan/pr-update-action@v2
+#      with:
+#        repo-token: "${{ secrets.NSLHB_TEST_TOKEN  }}"
+#        base-branch-regex: 'prod'
+#        head-branch-regex: 'main'
+#        body-template: |
+#          ${NEW_PR_BODY}
+#        body-update-action: 'suffix'
+#        body-uppercase-base-match: false
