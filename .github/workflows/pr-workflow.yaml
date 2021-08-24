@@ -166,6 +166,22 @@ jobs:
        id: login-ecr
        uses: aws-actions/amazon-ecr-login@v1
      
+     - name: Updating Build.gradle
+       run: |
+         cd ./ &&  sed -i "s#plugins {#plugins {\n  id 'com.google.cloud.tools.jib' version '3.1.4'#" build.gradle && sed -i "s#repositories {#jib {\n  from {\n    image = 'openjdk'\n    platforms {\n      platform {\n        architecture = 'amd64'\n        os = 'linux'\n      }\n      platform {\n        architecture = 'arm64'\n        os = 'linux'\n      }\n    }\n   }\n\n  to {\n    image = '755502957828.dkr.ecr.ap-south-1.amazonaws.com/test'\n    tags = ['pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }} ']\n  }\n}\nrepositories {\n    maven {\n	 credentials {\n            username '${{ secrets.TEST_USER }}'\n            password '${{ secrets.TEST_PASSWORD }}'\n        }\n        url \"${{ secrets.TEST_PACKAGE }}\"\n    }\n    maven {\n        url \"https://jitpack.io\" \n	}\n#" build.gradle 
+     - name: SonarCloud Scan
+       id: sonar
+       env:
+         GITHUB_TOKEN: ${{ secrets.NSLHB_GITHUB_TOKEN }} 
+         SONAR_TOKEN: ${{ secrets.NSLHB_SONAR_TOKEN }}
+       run: |  
+          echo "::set-output name=sonar_result::false"    
+          cd ./ &&  gradle sonarqube -Dsonar.branch.name=main -Dsonar.host.url=https://sonarcloud.io -Dsonar.organization=nslhb -Dsonar.projectKey=${{ secrets.SONAR_PROJECT_KEY }}  -Dsonar.projectName=${{ secrets.SONAR_PROJECT_NAME }} -Dsonar.language=java -Dsonar.sources=src/main/java  -Dsonar.tests=src/test/java -Dsonar.dynamicAnalysis=reuseReports  -Dsonar.junit.reportsPath=/target/test-reports  -Dsonar.qualitygate.wait=true -Dmaven.test.skip=true       # can use gradle sonarqube ....
+          echo "::set-output name=sonar_result::true"
+     - name: Build an image and pushing into ECR with Jib
+       run: |
+          cd ./ && gradle jib -x test
+          docker manifest inspect 755502957828.dkr.ecr.ap-south-1.amazonaws.com/test:pr-${{github.event.number}}-${{ github.event.pull_request.head.sha }} 
 
      - name: Logging into AWS-ECR & Build an image and pushing into ECR with Jib  
        id: jib_image
