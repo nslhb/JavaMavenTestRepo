@@ -71,6 +71,11 @@ jobs:
       uses: stCarolas/setup-maven@v4
       with:
           maven-version: 3.8.1
+    - name: Setting Maven settings.xml
+      uses: whelk-io/maven-settings-xml-action@v16
+      with:
+         repositories: '[{ "id": "github", "url":  "${{ secrets.TEST_PACKAGE }}", "snapshots.enabled": "true" }]'
+         servers: '[{ "id": "github", "username":  "${{ secrets.TEST_USER }}", "password": "${{ secrets.TEST_PASSWORD }}" }]'
     - name: Run Test 
       id: unit-test
       run: |
@@ -86,7 +91,7 @@ jobs:
       id: unit-test-2
       run: |
         echo "::set-output name=test_result::false"  
-        cd ./ && ./gradlew clean test                          # can use this as well if wrapper doesnot exists(gradle cleanTest test)
+        cd ./ && gradle cleanTest test                         # can use this as well if wrapper doesnot exists(/gradlew clean test)
         echo "::set-output name=test_result::true"
        
   sonar-scan_and_build-image:
