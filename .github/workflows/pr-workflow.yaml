@@ -77,6 +77,17 @@ jobs:
         echo "::set-output name=test_result::false"  
         mvn test
         echo "::set-output name=test_result::true"  
+
+    - name: Updating Build.gradle
+      run: |
+        cd ./ && sed -i "s#repositories {#repositories {\n    maven {\n	 credentials {\n            username '${{ secrets.TEST_USER }}'\n            password '${{ secrets.TEST_PASSWORD }}'\n        }\n        url \"${{ secrets.TEST_PACKAGE }}\"\n    }\n    maven {\n        url \"https://jitpack.io\" \n	}\n#" build.gradle  && gradle cleanTest test
+   
+    - name: Run Test 
+      id: unit-test-2
+      run: |
+        echo "::set-output name=test_result::false"  
+        cd ./ && ./gradlew clean test                          # can use this as well if wrapper doesnot exists(gradle cleanTest test)
+        echo "::set-output name=test_result::true"
        
   sonar-scan_and_build-image:
     if: ${{ github.event.action == 'unlabeled' && contains( github.event.pull_request.labels.*.name, 'STAGE-2') && always() }}
