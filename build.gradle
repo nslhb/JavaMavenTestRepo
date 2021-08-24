@@ -15,7 +15,10 @@ sourceCompatibility = '11'
 
 repositories {
   mavenLocal()
-	mavenCentral()
+  mavenCentral()
+  maven {
+        url "https://jitpack.io" 
+  }
 }
 
 dependencies {
